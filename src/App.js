@@ -1,24 +1,43 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes,Route, Navigate } from "react-router-dom";
+import {
+  LoginPage,
+  HomePage,
+  ErrorPage
+} from "./pages/index"
+import { useAuth } from "./contexts/AuthContext";
+import { useEffect } from "react";
 
 function App() {
+  const {
+    isAuthenticated
+  } = useAuth();
+  //PrivateRoute
+  const PrivateRoute = ({children})=>{
+    
+    return isAuthenticated ? children : <Navigate to='/login' />
+  }
+
+  //檢驗現有驗證狀態
+  useEffect(()=>{
+    console.log('isAuthenticated: ', isAuthenticated)
+  },[])
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <BrowserRouter>
+        <div className="app">
+          <Routes>
+            <Route path="/home" element={
+              <PrivateRoute>
+                <HomePage/>
+              </PrivateRoute>
+            }/>
+            <Route path="/login" element={<LoginPage/>}/>
+            <Route path="*" element={<ErrorPage />} />
+          </Routes>
+        </div>
+        
+      </BrowserRouter>
+    </>
   );
 }
 
