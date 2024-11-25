@@ -12,7 +12,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+    const [isPersistSet, setIsPersistSet] = useState(false)
     // 初始化持久性設定，先進行持久性設定
     useEffect(() => {
         const initializeAuth = async () => {
@@ -33,7 +33,10 @@ export const AuthProvider = ({ children }) => {
             if (user) {
                 console.log("使用者已登入:", user);
                 setIsAuthenticated(true);
-                console.log("比較登入後 auth:", auth);
+                if(!isPersistSet){
+                    setPersistence(auth, browserLocalPersistence);
+                    setIsPersistSet(true)
+                }
             } else {
                 console.log("尚未登入");
                 setIsAuthenticated(false);
