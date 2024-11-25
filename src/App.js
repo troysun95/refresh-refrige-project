@@ -20,7 +20,7 @@ function App() {
   //檢驗現有驗證狀態
   useEffect(()=>{
     console.log('isAuthenticated: ', isAuthenticated)
-  },[])
+  },[isAuthenticated])
   return (
     <>
       <BrowserRouter>
@@ -31,7 +31,7 @@ function App() {
                 <HomePage/>
               </PrivateRoute>
             }/>
-            <Route path="/login" element={<LoginPage/>}/>
+            <Route path="/login" element={isAuthenticated ? <HomePage/> : <LoginPage/>}/>
             <Route path="*" element={<ErrorPage />} />
           </Routes>
         </div>

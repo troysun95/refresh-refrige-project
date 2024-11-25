@@ -1,6 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { 
+    getAuth, 
+    GoogleAuthProvider,
+} from "firebase/auth";
+import { collection,  getDocs, getFirestore } from "firebase/firestore";
 // 環境變數設定
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_API_KEY,
@@ -19,3 +22,11 @@ const db = getFirestore(app)
 export const auth = getAuth(app)
 export const provide = new GoogleAuthProvider();
 
+//get all datas
+export const getAllDatas = async () => {
+    const querySnapshot = await getDocs(collection(db, "User001"));
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, " => ", doc.data());
+    });
+    return querySnapshot;
+}
