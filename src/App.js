@@ -2,8 +2,9 @@ import { BrowserRouter, Routes,Route, Navigate } from "react-router-dom";
 import {
   LoginPage,
   HomePage,
-  ErrorPage
-} from "./pages/index"
+  ErrorPage,
+  SignupPage,
+} from "./pages/index";
 import { useAuth } from "./contexts/AuthContext";
 import { useEffect } from "react";
 
@@ -11,9 +12,8 @@ function App() {
   const {
     isAuthenticated
   } = useAuth();
-  //PrivateRoute
+
   const PrivateRoute = ({children})=>{
-    
     return isAuthenticated ? children : <Navigate to='/login' />
   }
 
@@ -32,10 +32,10 @@ function App() {
               </PrivateRoute>
             }/>
             <Route path="/login" element={isAuthenticated ? <HomePage/> : <LoginPage/>}/>
+            <Route path="/signup" element={<SignupPage/>}/>
             <Route path="*" element={<ErrorPage />} />
           </Routes>
         </div>
-        
       </BrowserRouter>
     </>
   );

@@ -36,6 +36,8 @@ export const AuthProvider = ({ children }) => {
                 if(!isPersistSet){
                     setPersistence(auth, browserLocalPersistence);
                     setIsPersistSet(true)
+                }else{
+                    console.log(`isPersistSet 為 ${isPersistSet}`)
                 }
             } else {
                 console.log("尚未登入");

@@ -14,6 +14,7 @@ const LoginPage =()=>{
         <>
             <div>this is LoginPage!</div>
             <button onClick={handleLogin}>Google 按鈕</button>
+            <button onClick={()=>{navigate('/signup')}}>Click to sign up</button>
         </>
     )
 }

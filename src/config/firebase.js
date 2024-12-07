@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 //firebase 資料庫
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app)
+export const db = getFirestore(app)
 
 //驗證使用者相關
 export const auth = getAuth(app)
