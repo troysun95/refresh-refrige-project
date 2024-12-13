@@ -27,7 +27,7 @@ const HomePage = ()=>{
 
     useEffect(()=>{
         //嘗試拉 firebase 資料進來
-        fetchAllDatas()
+        //fetchAllDatas()
     },[])
     return(
         <>

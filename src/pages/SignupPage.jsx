@@ -2,12 +2,14 @@ import { createUserWithEmailAndPassword, deleteUser, updateProfile } from "fireb
 import { useState } from "react";
 import {auth, db} from "../config/firebase"
 import { useNavigate } from "react-router-dom";
-import { collection, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import Swal from "sweetalert2";
+import { useAuth } from "../contexts/AuthContext";
 
 const SignupPage = () => {
     //儲存format 的 state
     const navigate = useNavigate();
+    const {setIsUsercollectionExist} = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -26,8 +28,18 @@ const SignupPage = () => {
     })
     const [signupDisabled , setSignupDisabled] = useState(true)
 
-    //input 相關檢測
-    const checkIsValid = (isItemValid, itemName)=>{
+    //input 有效檢驗
+    
+    //更新按鈕可點擊
+    const updateBtnDisabled = ()=>{
+        if(isValid.email && isValid.password && isValid.username){
+            setSignupDisabled(false)
+        }else{
+            setSignupDisabled(true)
+        }
+    }
+
+    const updateIsItemValid = (isItemValid, itemName)=>{
         if(isItemValid){
             setIsValid((prev)=>({
                 ...prev,
@@ -40,19 +52,10 @@ const SignupPage = () => {
             }))
         }
     }
-    const disabledContent = ()=>{
-        if(isValid.email && isValid.password && isValid.username){
-            setSignupDisabled(false)
-        }else{
-            setSignupDisabled(true)
-        }
-    }
+
     //監聽 input 
     const handleInputChange = (event) => {
-        //因為 name , value 檢查階段會用到， 設變數儲存，以便後面使用 
-        //此處用 [}賦值 
         const {name, value} = event.target;
-        //立即更新
         setFormData((prev)=>({
             ...prev, 
             [name]:value
@@ -66,14 +69,14 @@ const SignupPage = () => {
                     ...prev,
                     [name]:isValidEmail ? '' : '請輸入正確郵件格式',
                 }))
-                checkIsValid(isValidEmail, name)
+                updateIsItemValid(isValidEmail, name)
             }else if(name === "password"){
                 const isValidPassword =  value.trim().length >= 6
                 setValidLabel((prev)=>({
                     ...prev,
                     [name]:isValidPassword ? '' : '請輸入 6 個以上字元',
                 }))
-                checkIsValid(isValidPassword, name)
+                updateIsItemValid(isValidPassword, name)
             }else{
                 const usernameRegex = /^[\S]{3,}$/;
                 const isValidUsername = usernameRegex.test(value);
@@ -81,11 +84,9 @@ const SignupPage = () => {
                     ...prev,
                     [name]: isValidUsername ? "" : "請輸入三個以上非特殊符號的字元",
                 }));
-                checkIsValid(isValidUsername, name)
+                updateIsItemValid(isValidUsername, name)
             }
-            //verify signup inputs 
-            disabledContent()
-            //印出檢測值
+            updateBtnDisabled()
         }else{
             //不可為空白值
             setValidLabel((prev)=>({
@@ -98,7 +99,6 @@ const SignupPage = () => {
 
     const updateUsername = async(signupUser)=>{
         try{
-            //應該是不會回傳任何東西
             await updateProfile(signupUser, {
                 displayName: formData.username,
             });
@@ -162,6 +162,8 @@ const SignupPage = () => {
                     text: `使用者：${user.displayName} 完成登錄，並已建立資料庫`,
                     icon: "success",
                 });
+                //這邊沒有設置 UserCollection 檢測
+                setIsUsercollectionExist(true)
                 navigate('/home'); 
             }else{
                 throw new Error("部分步驟未完成");

@@ -1,5 +1,3 @@
-
-//ver 2.0 , 改寫 驗證
 import { createContext, useContext, useState, useEffect } from "react";
 import {
     browserLocalPersistence,
@@ -13,6 +11,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isPersistSet, setIsPersistSet] = useState(false)
+    const [isUsercollectionExist, setIsUsercollectionExist] = useState(false)
     // 初始化持久性設定，先進行持久性設定
     useEffect(() => {
         const initializeAuth = async () => {
@@ -31,7 +30,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("使用者已登入:", user);
+                //console.log("使用者已登入:", user);
                 setIsAuthenticated(true);
                 if(!isPersistSet){
                     setPersistence(auth, browserLocalPersistence);
@@ -53,6 +52,8 @@ export const AuthProvider = ({ children }) => {
             value={{
                 isAuthenticated,
                 setIsAuthenticated,
+                isUsercollectionExist,
+                setIsUsercollectionExist,
             }}
         >
             {children}
