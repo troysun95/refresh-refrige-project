@@ -1,9 +1,10 @@
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import {auth, provide} from "../config/firebase";
+import {auth, provide, setupUserCollection} from "../config/firebase";
 import Swal from "sweetalert2";
 import {db} from "../config/firebase"
-import { setDoc , getDoc, doc} from "firebase/firestore";
+import { getDoc, doc} from "firebase/firestore";
+import { updateBtnDisabled } from "../fn";
 import { useAuth } from "../contexts/AuthContext";
 import {  useEffect, useState } from "react";
 
@@ -24,80 +25,46 @@ const LoginPage =()=>{
     })
     const [loginDisabled, setLoginDisabled] = useState(true)
 
-    const updateBtnDisabled = ()=>{ 
-        if(isValid.email && isValid.password){
-            setLoginDisabled(false)
-        }else{
-            setLoginDisabled(true)
-            console.log(loginInput.password)
+    
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        //宣告變數儲存更新的 input 與相關數值
+        let validationMessage = "";
+        let isFieldValid = false;
+    
+        // 檢查輸入是否為空
+        if (value.trim().length === 0) {
+            validationMessage = "此處不可以為空白";
+        } else {
+            if (name === "email") {
+                // 檢查 email 格式
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                isFieldValid = emailRegex.test(value);
+                validationMessage = isFieldValid ? "" : "請輸入正確郵件格式";
+                console.log("檢視 email validation :", isFieldValid)
+            } else if (name === "password") {
+                // 檢查密碼長度
+                isFieldValid = value.trim().length >= 6;
+                validationMessage = isFieldValid ? "" : "請輸入 6 個以上字元"
+            }
         }
-    }
-
-    const updateIsItemValid = (isItemValid, itemName)=>{
-        if(isItemValid){
-            setIsValid((prev)=>({
-                ...prev,
-                [itemName]: true
-            }))
-        }else{
-            setIsValid((prev)=>({
-                ...prev,
-                [itemName]: false
-            }))
-        }
-    }
-
-   
-    //監聽 input 與 檢查
-    const handleInputChange = (event)=>{
-        //宣報變數儲存會使用到的物件
-        const { name, value } =  event.target;
-        setLoginInput((prev)=>({
+    
+    
+        // 更新狀態
+        setLoginInput((prev) => ({
             ...prev,
             [name]:value,
-        }))
-        //檢驗是否有效
-        if(value.trim().length > 0 ){
-            //email 條件
-            if(name === "email") {
-                //條件
-                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                const isValidEmail = emailRegex.test(value)
-                //更新有效提示標籤
-                setValidLabel((prev)=>({
-                    ...prev,
-                    [name] : isValidEmail ? "": "請輸入正確郵件格式"
-                }))
-                updateIsItemValid(isValidEmail, name)
-            }else{
-                const isValidPassword =  value.trim().length >= 6
-                setValidLabel((prev)=>({
-                    ...prev,
-                    [name] : isValidPassword ? "": "請輸入 6 個以上字元"
-                }))
-                updateIsItemValid(isValidPassword, name)
-            }
-        }else{
-            setValidLabel((prev)=>({
-                ...prev,
-                [name]: "此欄位不可為空白"
-            }))
-        }
+        }));
+        setValidLabel((prev) => ({
+            ...prev,
+            [name]:validationMessage
+        }));
+        setIsValid((prev) => ({
+            ...prev,
+            [name]: isFieldValid
+        }));
+    };
 
-    }
-
-    const setupUserCollection = async( loginUser )=>{
-        try{
-            await setDoc(doc(db, "users", loginUser.uid),{
-                username: loginUser.displayName,
-                createdAt: new Date(),
-            })
-            return true
-        }catch(error){
-            console.error("failed to set up users collection", error)
-            return false
-        }
-    }
 
     const checkCollectionExist = async(user) => {
         const userUid = user.uid
@@ -163,8 +130,11 @@ const LoginPage =()=>{
 
 
     useEffect(()=>{
-        updateBtnDisabled()
+        //console.log(isValid.email, isValid.password)
+        updateBtnDisabled(isValid, setLoginDisabled)
     },[isValid])
+
+
     return (
         <>
             <div>this is LoginPage!</div>

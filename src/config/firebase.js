@@ -2,8 +2,10 @@ import { initializeApp } from "firebase/app";
 import { 
     getAuth, 
     GoogleAuthProvider,
+    updateProfile,
 } from "firebase/auth";
-import { collection,  getDocs, getFirestore } from "firebase/firestore";
+import { collection,  getDocs, getFirestore, setDoc, doc } from "firebase/firestore";
+import Swal from "sweetalert2";
 // 環境變數設定
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_API_KEY,
@@ -30,3 +32,32 @@ export const getAllDatas = async () => {
     });
     return querySnapshot;
 }
+
+export const updateUsername = async(user, newUsername, errorTitle, errorText)=>{
+  try{
+    await updateProfile (user, {
+      displayName: newUsername,
+    })
+  }catch(error){
+    console.error("failed to upadte usernaem in firebase", error)
+    Swal.fire({
+      title : errorTitle,
+      text: errorText,
+      icon: "error"
+    })
+  }
+}
+
+export const setupUserCollection =async(user,setupUsername)=>{
+  try{
+    await setDoc(doc(db, "users", user.uid),{
+      username: setupUsername,
+      createdAt: new Date(),
+  })
+  return true
+  }catch(error){
+    console.error("failed to set up user collection",error)
+    return false
+  }
+}
+

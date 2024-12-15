@@ -1,10 +1,11 @@
-import { createUserWithEmailAndPassword, deleteUser, updateProfile } from "firebase/auth";
-import { useState } from "react";
-import {auth, db} from "../config/firebase"
-import { useNavigate } from "react-router-dom";
-import { doc, setDoc } from "firebase/firestore";
-import Swal from "sweetalert2";
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import {auth, updateUsername, setupUserCollection} from "../config/firebase"
+import { updateBtnDisabled } from "../fn";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+//import { doc, setDoc } from "firebase/firestore";
 
 const SignupPage = () => {
     //儲存format 的 state
@@ -28,103 +29,52 @@ const SignupPage = () => {
     })
     const [signupDisabled , setSignupDisabled] = useState(true)
 
-    //input 有效檢驗
     
-    //更新按鈕可點擊
-    const updateBtnDisabled = ()=>{
-        if(isValid.email && isValid.password && isValid.username){
-            setSignupDisabled(false)
-        }else{
-            setSignupDisabled(true)
-        }
-    }
 
-    const updateIsItemValid = (isItemValid, itemName)=>{
-        if(isItemValid){
-            setIsValid((prev)=>({
-                ...prev,
-                [itemName]:true
-            }))
-        }else{
-            setIsValid((prev)=>({
-                ...prev,
-                [itemName]:false
-            }))
-        }
-    }
-
-    //監聽 input 
     const handleInputChange = (event) => {
-        const {name, value} = event.target;
-        setFormData((prev)=>({
-            ...prev, 
-            [name]:value
-        }));
-        //輸入值檢驗
-        if(value.trim().length > 0){
-            if(name === "email"){
-                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                const isValidEmail = emailRegex.test(value)
-                setValidLabel((prev)=>({
-                    ...prev,
-                    [name]:isValidEmail ? '' : '請輸入正確郵件格式',
-                }))
-                updateIsItemValid(isValidEmail, name)
-            }else if(name === "password"){
-                const isValidPassword =  value.trim().length >= 6
-                setValidLabel((prev)=>({
-                    ...prev,
-                    [name]:isValidPassword ? '' : '請輸入 6 個以上字元',
-                }))
-                updateIsItemValid(isValidPassword, name)
-            }else{
-                const usernameRegex = /^[\S]{3,}$/;
-                const isValidUsername = usernameRegex.test(value);
-                setValidLabel((prev) => ({
-                    ...prev,
-                    [name]: isValidUsername ? "" : "請輸入三個以上非特殊符號的字元",
-                }));
-                updateIsItemValid(isValidUsername, name)
+        const { name, value } = event.target;
+    
+        let validationMessage = "";
+        let isFieldValid = false;
+    
+        if (value.trim().length === 0) {
+            validationMessage = "此處不可以為空白";
+        } else {
+            switch (name) {
+                case "email":
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    isFieldValid = emailRegex.test(value);
+                    validationMessage = isFieldValid ? "" : "請輸入正確郵件格式";
+                    break;
+                case "password":
+                    isFieldValid = value.trim().length >= 6;
+                    validationMessage = isFieldValid ? "" : "請輸入 6 個以上字元";
+                    break;
+                case "username":
+                    const usernameRegex = /^[\S]{3,}$/;
+                    isFieldValid = usernameRegex.test(value);
+                    validationMessage = isFieldValid ? "" : "需要有至少 3 個以上非特殊字元";
+                    break;
+                default:
+                    break;
             }
-            updateBtnDisabled()
-        }else{
-            //不可為空白值
-            setValidLabel((prev)=>({
-                ...prev, 
-                [name]:"此欄位不可為空白"
-            }))
         }
-
-    }
-
-    const updateUsername = async(signupUser)=>{
-        try{
-            await updateProfile(signupUser, {
-                displayName: formData.username,
-            });
-            
-        }catch(err){
-            console.log("failed to update username in firebase", err)
-            Swal.fire({
-                title:"註冊名稱失敗",
-                text:"輸入名稱無法使用",
-                icon:"error"
-            })
-        }
-    }
-
-    const setupUserCollection =async(signupUser)=>{
-        try{
-            await setDoc(doc(db, "users", signupUser.uid),{
-                username: formData.username,
-                createdAt: new Date(),
-            })
-            return true
-        }catch(err){
-            console.log("faled to setup user collection", err)
-            return false
-        }
-    }
+    
+        // 更新三個 state
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        setValidLabel((prev) => ({
+            ...prev,
+            [name]: validationMessage,
+        }));
+        setIsValid((prev) => ({
+            ...prev,
+            [name]: isFieldValid,
+        }));
+    };
+    
 
 
     const handleSignUp = async (e) => {
@@ -146,13 +96,13 @@ const SignupPage = () => {
             stepSet.stepOne = true;
     
             // 第二步驟：更新使用者名稱
-            await updateUsername(user);
+            await updateUsername(user,formData.username, "註冊名稱無效", "輸入名稱無法使用" );
             if(user.displayName === formData.username){
                 stepSet.stepTwo = true;
             }
             
             // 第三步驟：設置使用者資料集合
-            const isCollectionSetup = await setupUserCollection(user);
+            const isCollectionSetup = await setupUserCollection(user, formData.username);
             stepSet.stepThree = isCollectionSetup;
     
             // 所有步驟完成，顯示成功訊息
@@ -221,9 +171,13 @@ const SignupPage = () => {
     
     
 
+    //切換按紐 disabled
+    useEffect(()=>{
+        updateBtnDisabled(isValid, setSignupDisabled)
+    },[isValid])
+
     return(
         <div className="signupPanel">
-            {/* from 預設會用get 方法將資料純進 action 網址  */}
             <form onSubmit={handleSignUp}>
                 <label>email : 
                     <input type="email"
