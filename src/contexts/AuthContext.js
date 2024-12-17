@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
         const initializeAuth = async () => {
             try {
                 await setPersistence(auth, browserLocalPersistence);
-                console.log("持久性設定完成, auth 為：",auth);
             } catch (error) {
                 console.error("持久性設定失敗:", error.code, error.message);
             }
@@ -30,7 +29,6 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                //console.log("使用者已登入:", user);
                 setIsAuthenticated(true);
                 if(!isPersistSet){
                     setPersistence(auth, browserLocalPersistence);

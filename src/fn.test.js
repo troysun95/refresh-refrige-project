@@ -1,6 +1,5 @@
 import { updateBtnDisabled } from "./fn";
 
-
 describe("updateBtnDisabled", () => {
     let mockSetBtnState;
 

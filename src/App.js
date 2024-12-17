@@ -28,6 +28,7 @@ function App() {
     console.log('isAuthenticated: ', isAuthenticated)
     console.log('isUsercollectionExist: ', isUsercollectionExist)
   },[isAuthenticated, isUsercollectionExist])
+  
   return (
     <>
       <BrowserRouter>

@@ -3,12 +3,15 @@ import {auth} from "../config/firebase";
 import { signOut } from "firebase/auth";
 import { getAllDatas } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 const HomePage = ()=>{
     const navigate = useNavigate()
     const [userDatas, setUserDatas]=  useState([]);
+    const { setIsUsercollectionExist } = useAuth();
     const handleLogout = async()=>{
         try{
             console.log(`使用者${auth?.currentUser.displayName}登出`)
+            setIsUsercollectionExist(false)
             await signOut(auth);
         }catch(err){
             console.log("fialed to logout")
@@ -26,8 +29,7 @@ const HomePage = ()=>{
     }
 
     useEffect(()=>{
-        //嘗試拉 firebase 資料進來
-        //fetchAllDatas()
+       console.log("確認現有 user",auth?.currentUser)
     },[])
     return(
         <>

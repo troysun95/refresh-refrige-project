@@ -86,21 +86,55 @@ const LoginPage =()=>{
         }
     }   
 
-    const handleLoginWithEmailAndPassword = async()=>{
-        try{
-            const result = await signInWithEmailAndPassword(
-                auth, 
-                loginInput.email, 
-                loginInput.password
-            )
-            console.log('result from signInWithEmailAndPassword', result)
-            await checkCollectionExist(result.user)
-            
-        }catch(error){
-            console.error("failed to login in with email and password",error)
-        }
-    }
+    // const handleLoginWithEmailAndPassword = async()=>{
+    //     try{
+    //         const result = await signInWithEmailAndPassword(
+    //             auth, 
+    //             loginInput.email, 
+    //             loginInput.password,
+    //         )
+    //         console.log('result from signInWithEmailAndPassword', result)
+    //         await checkCollectionExist(result.user)
+    //     }catch(error){
+    //         console.error("failed to login in with email and password",error)
+    //     }
+    // }
 
+    //add error code message
+    const handleLoginWithEmailAndPassword = async () => {
+        try {
+            const result = await signInWithEmailAndPassword(
+                auth,
+                loginInput.email,
+                loginInput.password
+            );
+            console.log('Login successful:', result.user);
+            await checkCollectionExist(result.user); // 自定義檢查用戶集合是否存在
+        } catch (error) {
+            console.error("Failed to login with email and password:", error);
+            let errorMessage = "輸入email 或 密碼錯誤"
+            // 處理錯誤代碼
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    errorMessage = '無效 email 格式'
+                    break;
+                case 'auth/wrong-password':
+                     errorMessage = '無效 密碼格式'
+                    break;
+                case 'auth/invalid-credential':
+                    errorMessage = '無效 email 或 錯誤密碼'
+                    break;
+                default:
+                    errorMessage = `未知錯誤 ：代碼 ${error.code}`
+            }
+            Swal.fire({
+                title:"使用者登入失敗",
+                text: errorMessage,
+                icon:"error"
+            })  
+        }
+    };
+    
 
     const handleLoginWithGoogle = async()=>{
         try{
@@ -109,13 +143,13 @@ const LoginPage =()=>{
             await checkCollectionExist(result.user);
         }catch(error){
             //針對報錯回傳顯示不同訊息
-            console.error('登入錯誤', error.message)
+            console.error('登入錯誤', error.code)
             let errorMessage = '登入失敗，請稍後再試';
-            if(error.message=== "Firebase: Error(auth/cancelled-popup-request)"){
+            if(error.code === "auth/cancelled-popup-request"){
                 errorMessage = "請求過多受阻，請稍後再嘗試"
-            }else if (error.message === "auth/popup-blocked"){
+            }else if (error.code === "auth/popup-blocked"){
                 errorMessage = "彈出視窗被阻擋，請先允許彈出視窗，並稍後再嘗試"
-            }else if (error.message === "auth/popup-closed-by-user"){
+            }else if (error.code === "auth/popup-closed-by-user"){
                 errorMessage = "彈出視窗被關閉，請稍後再嘗試"
             }else{
                 errorMessage = `未知錯誤:${error.message}`
