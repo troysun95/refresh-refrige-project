@@ -8,6 +8,29 @@ import { updateBtnDisabled } from "../fn";
 import { useAuth } from "../contexts/AuthContext";
 import {  useEffect, useState } from "react";
 
+const LoginWarningModal = ({setHasUserConfirmed, setIsModalOpen})=>{
+
+    const handleConfirmUpdate =()=>{
+        setHasUserConfirmed(true)
+    }
+
+    return(
+        <>
+            <div >
+                <div>
+                    若曾使用此郵件註冊過，使用 Google 登入將同步 Google 資訊並覆蓋現有資料。是否繼續？
+                </div>
+                <div>
+                    <button onClick={handleConfirmUpdate}>確定</button>
+                    <button onClick={()=>{
+                        setIsModalOpen(false)
+                    }}>取消</button>
+                </div>
+            </div>
+        </>
+    )
+}
+
 const LoginPage =()=>{
     const navigate = useNavigate();
     const {setIsUsercollectionExist} = useAuth()
@@ -24,7 +47,8 @@ const LoginPage =()=>{
         password: false
     })
     const [loginDisabled, setLoginDisabled] = useState(true)
-
+    const [ hasUserConfirmed, setHasUserConfirmed] = useState(false)
+    const [isModalOpened, setIsModalOpen]= useState(false)
     
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -86,21 +110,6 @@ const LoginPage =()=>{
         }
     }   
 
-    // const handleLoginWithEmailAndPassword = async()=>{
-    //     try{
-    //         const result = await signInWithEmailAndPassword(
-    //             auth, 
-    //             loginInput.email, 
-    //             loginInput.password,
-    //         )
-    //         console.log('result from signInWithEmailAndPassword', result)
-    //         await checkCollectionExist(result.user)
-    //     }catch(error){
-    //         console.error("failed to login in with email and password",error)
-    //     }
-    // }
-
-    //add error code message
     const handleLoginWithEmailAndPassword = async () => {
         try {
             const result = await signInWithEmailAndPassword(
@@ -109,7 +118,7 @@ const LoginPage =()=>{
                 loginInput.password
             );
             console.log('Login successful:', result.user);
-            await checkCollectionExist(result.user); // 自定義檢查用戶集合是否存在
+            await checkCollectionExist(result.user); 
         } catch (error) {
             console.error("Failed to login with email and password:", error);
             let errorMessage = "輸入email 或 密碼錯誤"
@@ -136,13 +145,20 @@ const LoginPage =()=>{
     };
     
 
-    const handleLoginWithGoogle = async()=>{
+    const handleLoginWithGoogle = ()=>{
+        //打開 modal
+        setIsModalOpen(true)
+    }
+
+    const fetchLogininWithGoogle = async()=>{
+        setIsModalOpen(false)
         try{
             const result = await signInWithPopup(auth, provide);
             console.log("result:",result)
             await checkCollectionExist(result.user);
+            
         }catch(error){
-            //針對報錯回傳顯示不同訊息
+
             console.error('登入錯誤', error.code)
             let errorMessage = '登入失敗，請稍後再試';
             if(error.code === "auth/cancelled-popup-request"){
@@ -162,11 +178,12 @@ const LoginPage =()=>{
         }
     }
 
-
     useEffect(()=>{
-        //console.log(isValid.email, isValid.password)
         updateBtnDisabled(isValid, setLoginDisabled)
-    },[isValid])
+        if(hasUserConfirmed){
+            fetchLogininWithGoogle()
+        }
+    },[isValid, hasUserConfirmed])
 
 
     return (
@@ -195,10 +212,15 @@ const LoginPage =()=>{
                 >登入
                 </button>
             </div>
-            
             <hr />
             <button onClick={handleLoginWithGoogle}>Google 按鈕</button>
             <button onClick={()=>{navigate('/signup')}}>Click to sign up</button>
+            {isModalOpened ? 
+                <LoginWarningModal 
+                    setHasUserConfirmed={setHasUserConfirmed}
+                    isModalOpened={isModalOpened}
+                /> : null
+            }
         </>
     )
 }
