@@ -36,8 +36,8 @@ const SignupPage = () => {
         stepTwo: false,
         stepThree: false,
     });
-
     const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -81,32 +81,39 @@ const SignupPage = () => {
             [name]: isFieldValid,
         }));
     };
-
+ 
+    //step 1
     const handleSignUp = async (e) => {
         e.preventDefault();
-
+        setIsLoading(true)
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const newUser = userCredential.user;
             setUser(newUser);
             await validSingupEmail(newUser);
-            alert("請至註冊 email 信箱點擊驗證網址，完成註冊流程")
-            setHasVerifyEmailSent(true);
+            console.log("請至註冊 email 信箱點擊驗證網址，完成註冊流程")
             setStepSet((prev) => ({
                 ...prev,
                 stepOne: true,
             }));
+            console.log('step one set')
+            setHasVerifyEmailSent(true);
         } catch (error) {
+            console.error("註冊流程中發生錯誤", error.code);
+            let errorMessage = "帳戶建立失敗，請檢查輸入資訊"
+            if(error.code === "auth/email-already-in-use") {
+                errorMessage = "email 已經註冊或是曾使用 Google 快速登入"
+            }
             Swal.fire({
                 title: "註冊失敗",
-                text: "帳戶建立失敗，請檢查輸入資訊",
+                text: errorMessage,
                 icon: "error",
             });
-            console.error("註冊流程中發生錯誤", error.message);
-            setHasVerifyEmailSent(false);
+            setIsLoading(false)
         }
     };
 
+    //step 2
     const fetchUsernameUpdate = async () => {
         try {
             await updateUsername(user, formData.username, "未完成使用者登錄", "輸入名稱無效");
@@ -117,9 +124,11 @@ const SignupPage = () => {
             console.log("step 2 set!")
         } catch (error) {
             await deleteUser(user);
+            setIsLoading(false)
         }
     };
 
+    //step 3
     const fetchUsercollectionSetup = async () => {
         try {
             const isCollectionSetup = await setupUserCollection(user, formData.username);
@@ -135,6 +144,7 @@ const SignupPage = () => {
                 text: "請重新註冊帳戶",
                 icon: "error",
             });
+            setIsLoading(false)
         }
     };
 
@@ -160,12 +170,13 @@ const SignupPage = () => {
 
 
     useEffect(() => {
-        updateBtnDisabled(isValid, setSignupDisabled);
-    }, [isValid]);
+        console.log('呼叫切換disabled')
+        updateBtnDisabled(isValid, setSignupDisabled, isLoading);
+    }, [isValid, isLoading]);
 
 
     useEffect(()=>{
-        if(hasVerifyEmailSent){
+        if(hasVerifyEmailSent){ 
             if(stepSet.stepOne && stepSet.stepTwo && stepSet.stepThree ){
                 setIsUsercollectionExist(true)
                 Swal.fire({
@@ -173,25 +184,20 @@ const SignupPage = () => {
                     text : `使用者 ${auth.currentUser.displayName} 資料庫已初始化`, 
                     icon:"success"
                 })
-            }else{
+                setIsLoading(false)
+            }else{  
                 console.log("步驟未完成，檢查 ：",stepSet.stepOne , stepSet.stepTwo , stepSet.stepThree)
             }
-        }
-        if(stepSet.stepOne){
-            console.log("step 1 set!")
-        }else if(stepSet.stepTwo){
-            console.log("step 2 set!")
-        }else if (stepSet.stepTwo) {
-            console.log("step 3 set!")
-        }else{
-            console.log('none step set !')
         }
     },[stepSet, navigate])
 
 
     useEffect(()=>{
-        console.log("hasVerifyEmailSent is ", hasVerifyEmailSent)
-    },[hasVerifyEmailSent])
+        console.log('isLoading is',isLoading, 'and stepone',stepSet.stepOne , 'signupDisabled is', signupDisabled)
+    },[isLoading,stepSet, signupDisabled])
+
+
+
     return (
         <div className="signupPanel">
             <form onSubmit={handleSignUp}>
@@ -231,13 +237,13 @@ const SignupPage = () => {
                     type="submit"
                     disabled={signupDisabled}
                 >
-                    註冊
+                    {isLoading ? "註冊進行中": "註冊"}
                 </button>
             </form>
             <button onClick={() => navigate('/login')}>回到登入頁面</button>
             {/* <button onClick={handleDeleteUser}>delete user signup</button> */}
-            {stepSet.stepOne ? <button onClick={handleCheckEmailVerified}> 完成email驗證請點擊 </button> : null}
-            {stepSet.stepOne ? <button onClick={handleSendVerifyEmail}> 點擊重新寄送驗證信 </button> : null}
+            {isLoading ? <button onClick={handleCheckEmailVerified}> 完成email驗證請點擊 </button> : null}
+            {isLoading ? <button onClick={handleSendVerifyEmail}> 點擊重新寄送驗證信 </button> : null}
         </div>
     );
 };

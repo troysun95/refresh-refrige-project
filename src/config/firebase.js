@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app)
 
 //驗證使用者相關
-export const auth = getAuth(app)
+export const auth = getAuth(app);
 export const provide = new GoogleAuthProvider();
 
 //get all datas
