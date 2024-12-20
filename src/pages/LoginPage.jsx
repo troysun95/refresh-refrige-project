@@ -1,12 +1,14 @@
+import styles from "./LoginPage.module.scss";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import {auth, provide, setupUserCollection} from "../config/firebase";
+import { updateBtnDisabled } from "../fn";
 import Swal from "sweetalert2";
 import {db} from "../config/firebase"
 import { getDoc, doc} from "firebase/firestore";
-import { updateBtnDisabled } from "../fn";
-import { useAuth } from "../contexts/AuthContext";
 import {  useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import {Kitchen, Close} from "@mui/icons-material";
 
 const LoginWarningModal = ({setHasUserConfirmed, setIsModalOpen})=>{
 
@@ -15,23 +17,35 @@ const LoginWarningModal = ({setHasUserConfirmed, setIsModalOpen})=>{
     }
 
     return(
-        <>
-            <div >
-                <div>
-                    若曾使用此郵件註冊過，使用 Google 登入將同步 Google 資訊並覆蓋現有資料。是否繼續？
+            <div className={styles.loginWarningModal}>
+                <div 
+                    className={styles.modaTitle}
+                    onClick={()=>{setIsModalOpen(false)}}
+                >
+                    <h3>同步警告</h3>
+                    <Close className={styles.modalCloseBtn}/>
                 </div>
-                <div>
-                    <button onClick={handleConfirmUpdate}>確定</button>
-                    <button onClick={()=>{
-                        setIsModalOpen(false)
-                    }}>取消</button>
+                <div className={styles.modalInform}>
+
+                    <p>若曾使用此郵件註冊過，使用 Google 登入將同步 Google 資訊並覆蓋現有資料 (如：username, 使用者頭像 等)。</p> 
+                </div>
+                <div className={styles.modalBtnPanel} >
+                    <div>
+                        <span> 是否繼續？</span>
+                    </div>
+                    <div>
+                        <button onClick={()=>{
+                            setIsModalOpen(false)
+                        }}>取消</button>
+                        <button onClick={handleConfirmUpdate}>確定</button>
+                    </div>
+                    
                 </div>
             </div>
-        </>
     )
 }
 
-const LoginPage =()=>{
+const LoginPage =({setIsDarkMode, isDarkMode})=>{
     const navigate = useNavigate();
     const {setIsUsercollectionExist} = useAuth()
     const [loginInput, setLoginInput] = useState({
@@ -188,23 +202,31 @@ const LoginPage =()=>{
 
     return (
         <>
-            <div>this is LoginPage!</div>
-            <div>
+        <div className={styles.loginWrapper}>
+            <div className={styles.brandContainer}>
+                <div className={styles.brandTitle}>Refresh Refrige</div>
+                <div className={styles.branLogoContainer}>
+                    <Kitchen className={styles.brandLogo}/>
+                </div>
+            </div>
+            <div className={styles.loginContainer}>
                 <form action="">
+                    <label >郵件 : </label>
                     <input 
                         name="email"
                         type="text"
                         autoComplete="username"
                         onChange={handleInputChange}
                     />
-                    <div>{validLabel.email}</div>
+                    <div className={styles.validLabel}>{validLabel.email}</div>
+                    <label >密碼 : </label>
                     <input 
                         name="password"
                         type="password"
                         autoComplete="current-password"
                         onChange={handleInputChange}
                     />  
-                    <div>{validLabel.password}</div>
+                    <div className={styles.validLabel} >{validLabel.password}</div>
                 </form>
                 <button 
                     onClick={handleLoginWithEmailAndPassword}
@@ -212,15 +234,30 @@ const LoginPage =()=>{
                 >登入
                 </button>
             </div>
-            <hr />
-            <button onClick={handleLoginWithGoogle}>Google 按鈕</button>
-            <button onClick={()=>{navigate('/signup')}}>Click to sign up</button>
-            {isModalOpened ? 
-                <LoginWarningModal 
-                    setHasUserConfirmed={setHasUserConfirmed}
-                    isModalOpened={isModalOpened}
-                /> : null
-            }
+            <hr style={{margin:"10px 5px"}}/>
+            <div className={styles.loginBtnPanel}>
+                <div className={styles.fastLogin}>
+                    <div> 或 </div>
+                    <button className={styles.googleFastLogin}onClick={handleLoginWithGoogle}>Google 快速登入</button>
+                    {/* 快速登入警告視窗 */}
+                    {isModalOpened ? 
+                        <LoginWarningModal 
+                        setHasUserConfirmed={setHasUserConfirmed}
+                        setIsModalOpen={setIsModalOpen}
+                        /> : null
+                    }   
+                </div>
+                <div className={styles.toSginPagePanel}>
+                    尚未註冊？ 前往<button onClick={()=>{navigate('/signup')}}>  註冊頁面</button>
+                </div>               
+            </div>
+            <div className={styles.publicNavbar}>
+                <button onClick={()=>{
+                    setIsDarkMode(!isDarkMode)
+                }}>{isDarkMode ? "換淺色模式"  : "換深色模式"}</button>
+            </div>
+        </div>
+            
         </>
     )
 }

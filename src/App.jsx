@@ -1,3 +1,4 @@
+import styles from "./App.module.scss"
 import { BrowserRouter, Routes,Route, Navigate } from "react-router-dom";
 import {
   LoginPage,
@@ -6,7 +7,7 @@ import {
   SignupPage,
 } from "./pages/index";
 import { useAuth } from "./contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function App() {
   const {
@@ -22,17 +23,23 @@ function App() {
     return (isAuthenticated && isUsercollectionExist)  ? <Navigate to='/home' replace/> : children
   }
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
   //檢驗現有驗證狀態
   useEffect(()=>{
     //只是要印出來看
     console.log('isAuthenticated: ', isAuthenticated)
     console.log('isUsercollectionExist: ', isUsercollectionExist)
-  },[isAuthenticated, isUsercollectionExist])
+    if(isDarkMode){
+      document.documentElement.classList.add('dark-mode')
+    }else{
+      document.documentElement.classList.remove('dark-mode')
+    }
+  },[isAuthenticated, isUsercollectionExist, isDarkMode])
   
   return (
     <>
       <BrowserRouter>
-        <div className="app">
+        <div className={styles.appContainer}>
           <Routes>
             {/* 私路由 */}
             <Route path="/home" element={
@@ -43,7 +50,10 @@ function App() {
             {/* 公路由 */}
             <Route path="/login" element ={
               <PublicRoute>
-                <LoginPage/>
+                <LoginPage
+                  isDarkMode={isDarkMode} 
+                  setIsDarkMode={setIsDarkMode}
+                />
               </PublicRoute>
             }/>
              <Route path="/signup" element ={

@@ -1,0 +1,27 @@
+
+.appContainer {
+    border: 2px solid red;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    background-color: var(--background-color);
+    color: var(--text-color);
+
+}
+
+//RWD
+@media (min-width: 768px) and (max-width: 992px) {
+    .appContainer{
+      width: 960px;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1440px) {
+.appContainer{ 
+width: 1440px;
+}
+}
+  
+
+  
+  

@@ -1,0 +1,58 @@
+@use '../styles/base';
+
+.singupPage{
+    margin: 0;
+    border: 3px solid #000;
+    width: 95%;
+    position: relative;
+    font-family: var(--main-text-font-family);
+    .signupTitle{
+        margin-top: 50px;
+        height: 12%;
+        border: 1px solid var(--text-color);
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        font-size: 30px;
+        .brandTitle{
+            font-family: var(--brand-title-font-family);
+        }
+    }
+    .signupInputPanel{
+        border: 1px solid #000;
+        height: 50%;
+        input{
+            @include base.input-setting;
+        }
+        .signupBtn{
+            width: 60%;
+            height: 50px;
+            border-radius: 10px;
+        }
+        .verifyBtnPanel{
+            width: 100%;
+            height: 50px;
+            border: 1px solid red;
+            display: flex;
+            flex-direction: row;
+
+            button{
+                
+            }
+        }
+    }
+    .signupLinkPanel{
+        height: 20%;
+        border: 1px solid #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        button{
+            width: 100px;
+            height: 30px;
+            border-radius: 10px;
+        }
+
+    }
+}

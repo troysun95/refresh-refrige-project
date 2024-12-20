@@ -1,4 +1,5 @@
-import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification } from "firebase/auth";
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import styles from './SignupPage.module.scss';
 import { auth, updateUsername, setupUserCollection, validSingupEmail } from "../config/firebase";
 import { updateBtnDisabled } from "../fn";
 import { useEffect, useState } from "react";
@@ -170,7 +171,9 @@ const SignupPage = () => {
 
 
     useEffect(() => {
-        console.log('呼叫切換disabled')
+        if(isValid > 0){
+            console.log('呼叫切換disabled')
+        }
         updateBtnDisabled(isValid, setSignupDisabled, isLoading);
     }, [isValid, isLoading]);
 
@@ -199,51 +202,64 @@ const SignupPage = () => {
 
 
     return (
-        <div className="signupPanel">
+        <div className={styles.singupPage}>
+            <div className={styles.signupTitle}>
+                <h3>註冊加入</h3>
+                <h3 className={styles.brandTitle}>Refresh Refrige</h3>
+            </div>
+            <div className={styles.signupInputPanel}>
             <form onSubmit={handleSignUp}>
-                <label>
-                    email :
-                    <input
-                        type="email"
-                        value={formData.email}
-                        name="email"
-                        onChange={handleInputChange}
-                    />
-                    <div className="email-hints">請輸入可以接收驗證信件的 email </div>
-                    <div className="validCheckBox">{validLabel.email}</div>
-                </label>
-                <label>
-                    password :
-                    <input
-                        type="password"
-                        value={formData.password}
-                        name="password"
-                        onChange={handleInputChange}
-                    />
-                    <div className="validCheckBox">{validLabel.password}</div>
-                </label>
-                <label>
-                    username :
-                    <input
-                        type="text"
-                        value={formData.username}
-                        name="username"
-                        onChange={handleInputChange}
-                    />
-                    <div className="validCheckBox">{validLabel.username}</div>
-                </label>
-                <button
-                    className="signUpBtn"
-                    type="submit"
-                    disabled={signupDisabled}
-                >
-                    {isLoading ? "註冊進行中": "註冊"}
-                </button>
-            </form>
-            <button onClick={() => navigate('/login')}>回到登入頁面</button>
-            {/* <button onClick={handleDeleteUser}>delete user signup</button> */}
-            {isLoading ? <button onClick={handleCheckEmailVerified}> 完成email驗證請點擊 </button> : null}
-            {isLoading ? <button onClick={handleSendVerifyEmail}> 點擊重新寄送驗證信 </button> : null}
+                    <label>
+                        email :
+                        <input
+                            type="email"
+                            value={formData.email}
+                            name="email"
+                            onChange={handleInputChange}
+                        />
+                        <div className="email-hints">請輸入可以接收驗證信件的 email </div>
+                        <div className="validCheckBox">{validLabel.email}</div>
+                    </label>
+                    <label>
+                        password :
+                        <input
+                            type="password"
+                            value={formData.password}
+                            name="password"
+                            onChange={handleInputChange}
+                        />
+                        <div className="validCheckBox">{validLabel.password}</div>
+                    </label>
+                    <label>
+                        username :
+                        <input
+                            type="text"
+                            value={formData.username}
+                            name="username"
+                            onChange={handleInputChange}
+                        />
+                        <div className="validCheckBox">{validLabel.username}</div>
+                    </label>
+                    <div className={styles.signupBtn}>
+                        <button
+                            className="signUpBtn"
+                            type="submit"
+                            disabled={signupDisabled}
+                        >
+                            {isLoading ? "註冊進行中": "註冊並發送驗證信件"}
+                        </button>
+                    </div>
+
+                    <div className={styles.verifyBtnPanel}>
+                        {isLoading ? <button onClick={handleCheckEmailVerified}> 已點擊email驗證，繼續完成註冊 </button> : null}
+                        {isLoading ? <button onClick={handleSendVerifyEmail}> 點擊重新寄送驗證信 </button> : null}
+                    </div>
+                </form>
+            </div>
+            <hr />
+            <div className={styles.signupLinkPanel}>
+                <button onClick={() => navigate('/login')}>前往登入頁面</button>
+            </div>
         </div>
     );
 };

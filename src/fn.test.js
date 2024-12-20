@@ -35,7 +35,7 @@ describe("updateBtnDisabled", () => {
         // 驗證 setBtnState 被呼叫且參數為 true (按鈕禁用)
         expect(mockSetBtnState).toHaveBeenCalledWith(true);
     });
-
+    
     test("loading 未進行時，當所有欄位皆為 true，應該啟用按鈕", () => {
         const fieldState = { email: true, password: true, username: true };
         const isLoading = false

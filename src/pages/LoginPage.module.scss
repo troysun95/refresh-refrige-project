@@ -1,0 +1,177 @@
+@use '../styles/base';
+//LoginPage
+.loginWrapper{
+    margin: 0;
+    border: 3px solid #000;
+    width: 95%;
+    position: relative;
+    font-family: var(--main-text-font-family);
+    .brandContainer{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 25%;
+        .brandTitle{
+            margin-top: 50px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: var(--title-fz);
+            font-weight: var(--title-fw);
+            color:var(--text-color);
+            font-family: var(--brand-title-font-family);
+        }
+        .branLogoContainer{
+            margin-top: 50px;
+            height: 200px;
+            .brandLogo{
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                object-fit: cover;
+                color: var(--brand-logo-color);
+            }
+        }
+        
+    }
+    .loginContainer{
+        height: 35%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        form{
+            width: 100%;
+            height: auto;
+            label{
+                font-size: var(--main-text-fz);
+                margin-left: 1rem;
+            }
+            .validLabel{
+                margin: .5rem 1rem;
+                font-size: var(--secondary-text-fz);
+                color:var( --error-color);
+            }
+           input{
+               @include base.input-setting;
+            }
+        }
+        button{
+            margin-top: 30px;
+            width: 50%;
+            height: 50px;
+            border-radius: 25px;
+        }
+    }
+    .loginBtnPanel{
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        div{
+            margin: 10px 5px;
+        }
+       .fastLogin{
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            .googleFastLogin{
+                width: 30%;
+                height: 60px;
+                font-weight: 600;
+                font-size: 18px;
+                border-radius: 20px;
+                color:var(--text-color);
+                background-color: var(--primary-color);
+            }
+            //LoginWarningModal
+            .loginWarningModal{
+                position: absolute;
+                padding: 10px 8px;
+                top:100px;
+                width: 80%;
+                height: 70%;
+                background-color: var(--modal-bgc-color);
+                border:2px solid var(--text-color);
+                border-radius: 20px;
+                z-index: 1;
+                .modaTitle{
+                    height: 30px;
+                    display: flex;
+                    position: relative;
+                    h3{
+                        margin-left: 40%;
+                        font-weight: 700;
+                        font-size: 25px;
+                    }   
+                    .modalCloseBtn{
+                        position: absolute;
+                        top:5px;
+                        right: 5px;
+                        @include base.icon-setting ;
+                        border: 1px solid #000;
+                    }
+                }
+                .modalInform{
+                    margin: 15px;
+                    height: 40%;
+                    p{
+                        font-size: var(--main-text-fz);
+                        line-height: 25px;
+                        height: 95%;
+                        border-bottom: 1px solid var(--hover-color);
+                    }
+                }
+                .modalBtnPanel{
+                    height: 25%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    div{
+                        margin: 10px;
+                        span{
+                            font-size: var(--secondary-text-fz);
+                        }
+                        button{
+                            @include base.button-setting;
+                            margin: 1rem;
+                            width: 8rem;
+                            height: 3rem;
+                            border-radius: 10px;
+                        }
+                    }
+                    
+                }
+            }
+            span{
+                width: 100%;
+                font-size: var(--secondary-text-fz);
+            }
+       }
+       .toSginPagePanel{    
+            display: flex;
+            align-items: center;
+            margin-top: 50px;
+            button{
+                margin-left: 20px;
+                border-radius: 5px;
+            }
+       }
+    }
+    .publicNavbar{
+        width: 30px;
+        height: 100px;
+        position: absolute;
+        top:20px;
+        right: 10px;
+        font-weight: 700;
+        z-index: 2;   
+    }
+}
+
+button{
+    @include base.button-setting;
+}
+

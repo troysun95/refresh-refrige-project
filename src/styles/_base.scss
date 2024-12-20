@@ -1,0 +1,208 @@
+/* base.scss */
+@use './reset.scss';
+
+:root{
+  //顏色
+  --primary-color: #19a432;
+  --background-color: #fff;
+  --modal-bgc-color:#e9e4e4;
+  --brand-logo-color:#9DC384;
+  --brand-title-color: #444;
+  --text-color: #333;
+  --error-color: red;
+  --warning-color: orange;
+  --input-outline-color: #333;
+  --button-border-color: #625e5e;
+  --hover-color: #a29999;
+
+  //通用：文字
+  --title-fz:40px;
+  --title-fw:600;
+  --main-text-fz: 20px;
+  --secondary-text-fz:16px;
+    
+  //字體
+  --brand-title-font-family: "Pacifico", serif;
+  --main-text-font-family: "Noto Sans TC", serif;
+
+}
+
+/* 如果是暗黑模式 */
+// .dark-mode {//嘗試 提高權重
+html.dark-mode{
+  --primary-color: #0a960f;
+  --background-color: #333;
+  --modal-bgc-color:#525050;
+  --brand-logo-color:#496337;
+  --brand-title-color: #e0e00e;
+  --text-color: #fff;
+  --input-outline-color: #bdbcbc;
+  --button-border-color: #a59c9c;
+  --hover-color: #dac4c4;
+}
+  
+//常用 設定
+
+//grid
+@mixin grid-setting-autofill($cloumnsWidth, $rowHeight,$justify-content, $align-items){
+  display: grid;
+  justify-content: $justify-content;
+  align-items: $align-items;
+  grid-template-columns: repeat(auto-fit, $cloumnsWidth);
+  grid-template-rows: repeat(auto-fit, $rowHeight);
+}
+
+//icon
+@mixin icon-setting {
+  border:none;
+  border-radius: 50%;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  &{
+      &:hover {
+          background-color: var(--hover-color);
+        }
+ } 
+}
+
+
+//button,稍微修改一下 button 樣式
+@mixin button-setting{
+  cursor: pointer;
+  color: var(--text-color);
+  border:1.5px solid var(--button-border-color);
+}
+
+//text ...
+@mixin title-three-dots{
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+//only available for chrome & safari
+@mixin line-clamp($lines) {
+  display: -webkit-box;              
+  -webkit-box-orient: vertical;      
+  -webkit-line-clamp: $lines;       
+  overflow: hidden;                  
+  text-overflow: ellipsis;           
+}
+
+
+//modal 相關
+@mixin modal-title-container{
+  .titleContainer{
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 10px 10px 0 15px;
+      width: 100%;
+      height: 42px;
+      border-bottom: 1px solid #EBEBEB;
+      .title{
+          font-size: 18px;
+          font-weight: 700;
+          line-height: 26.06px;
+      }
+      .closeBtn{
+        cursor: pointer;
+      }
+  }
+}
+
+
+@mixin modal-btn-panel{
+  .btnPanel{
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      height :44px;
+      cursor: pointer;
+  }
+}
+
+@mixin  modal-input-panel{
+  input{
+      border:none;
+      outline: none;
+      background-color: rgba(0,0,0,0);
+      width: 100%;
+      height: 100%;
+      margin-left: 10px;
+      font-family: var(--main-font-family);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20.27px;
+      text-align: left;
+  }
+
+}
+
+
+@mixin hover-item {
+  &{
+      cursor: pointer;
+      &:hover{
+          background-color: var(--hover-color);
+      }
+  }
+}
+
+@mixin active-btn-setting{
+  &{
+      cursor: pointer;
+      &:active{
+          background-color: var(--hover-color);
+      }
+  }
+}
+
+
+
+@mixin horizon-bar-setting{
+  overflow-x: scroll;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+
+@mixin mask-setting{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top:0;
+  background-color: #000;
+  opacity: .1;
+  z-index: 1;
+}
+
+@mixin duration-panel-setting{
+  position: absolute;
+  bottom:1rem;
+  right: 1rem;
+  align-items: center;
+  padding: 3px 1px;
+  z-index: 1;
+  color:#fff;
+  background-color: rgba($color: #000000, $alpha: .4);
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@mixin input-setting{
+  margin: 10px ;
+  padding-left: 8px;
+  width: 75%;
+  height: 30px;
+  border-radius: 10px;
+  border:none;
+  outline: 1.5px solid var(--input-outline-color);
+  font-size: var(--main-text-fz);
+  &:focus{
+    outline: 2.5px solid var(--input-outline-color);
+  }
+}
+
