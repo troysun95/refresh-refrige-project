@@ -1,6 +1,11 @@
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import styles from './SignupPage.module.scss';
-import { auth, updateUsername, setupUserCollection, validSingupEmail } from "../config/firebase";
+import { 
+    auth, 
+    updateUsername,  
+    validSingupEmail, 
+    setupUserSettingCollection,
+} from "../config/firebase";
 import { updateBtnDisabled } from "../fn";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
@@ -130,32 +135,38 @@ const SignupPage = () => {
     };
 
     //step 3
-    const fetchUsercollectionSetup = async () => {
-        try {
-            const isCollectionSetup = await setupUserCollection(user, formData.username);
-            setStepSet((prev) => ({
-                ...prev,
-                stepThree: isCollectionSetup,
-            }))
-            console.log("step 3 set!")
-        } catch (error) {
-            await deleteUser(user);
-            Swal.fire({
-                title: "資料庫未建立成功",
-                text: "請重新註冊帳戶",
-                icon: "error",
-            });
-            setIsLoading(false)
+    const fetchSetupUserSetting = async () => {
+        if(user && formData){
+            try {
+                const isCollectionSetup = await setupUserSettingCollection(
+                    user, 
+                    formData.email,
+                    formData.username
+                )
+                setStepSet((prev) => ({
+                    ...prev,
+                    stepThree: isCollectionSetup,
+                }))
+                console.log("step 3 set!")
+            } catch (error) {
+                await deleteUser(user);
+                Swal.fire({
+                    title: "資料庫未建立成功",
+                    text: "請重新註冊帳戶",
+                    icon: "error",
+                });
+                setIsLoading(false)
+            }
         }
-    };
+    }
 
 
     const handleCheckEmailVerified = async()=>{
         await user.reload();
         if(auth.currentUser?.emailVerified){
-            console.log('firebase 以登記註冊郵件完成驗證')
+            console.log('firebase 已經登記註冊郵件並完成驗證')
             await fetchUsernameUpdate()
-            await fetchUsercollectionSetup();
+            await fetchSetupUserSetting();
         }else{
             console.log('註冊郵件尚未完成驗證，請稍後再試')
         }
@@ -192,14 +203,17 @@ const SignupPage = () => {
                 console.log("步驟未完成，檢查 ：",stepSet.stepOne , stepSet.stepTwo , stepSet.stepThree)
             }
         }
-    },[stepSet, navigate])
+    },[stepSet])
+
+
+    // useEffect(()=>{
+    //     console.log('isLoading is',isLoading, 'and stepone',stepSet.stepOne , 'signupDisabled is', signupDisabled)
+    // },[isLoading,stepSet, signupDisabled])
 
 
     useEffect(()=>{
-        console.log('isLoading is',isLoading, 'and stepone',stepSet.stepOne , 'signupDisabled is', signupDisabled)
-    },[isLoading,stepSet, signupDisabled])
-
-
+        console.log('監聽到刷新頁面行為')
+    },[navigate])
 
     return (
         <div className={styles.singupPage}>
@@ -208,57 +222,56 @@ const SignupPage = () => {
                 <h3 className={styles.brandTitle}>Refresh Refrige</h3>
             </div>
             <div className={styles.signupInputPanel}>
-            <form onSubmit={handleSignUp}>
                     <label>
-                        email :
+                        郵件 :
                         <input
                             type="email"
                             value={formData.email}
                             name="email"
                             onChange={handleInputChange}
+                            placeholder="請輸入可以接收驗證信件的郵件地址"
                         />
-                        <div className="email-hints">請輸入可以接收驗證信件的 email </div>
-                        <div className="validCheckBox">{validLabel.email}</div>
+                        <div className={styles.validLabel}>{validLabel.email}</div>
                     </label>
                     <label>
-                        password :
+                        密碼 :
                         <input
                             type="password"
                             value={formData.password}
                             name="password"
                             onChange={handleInputChange}
                         />
-                        <div className="validCheckBox">{validLabel.password}</div>
+                        <div className={styles.validLabel}>{validLabel.password}</div>
                     </label>
                     <label>
-                        username :
+                        使用者名稱 :
                         <input
                             type="text"
                             value={formData.username}
                             name="username"
                             onChange={handleInputChange}
                         />
-                        <div className="validCheckBox">{validLabel.username}</div>
+                        <div className={styles.validLabel}>{validLabel.username}</div>
                     </label>
-                    <div className={styles.signupBtn}>
-                        <button
-                            className="signUpBtn"
-                            type="submit"
-                            disabled={signupDisabled}
-                        >
-                            {isLoading ? "註冊進行中": "註冊並發送驗證信件"}
-                        </button>
-                    </div>
-
-                    <div className={styles.verifyBtnPanel}>
-                        {isLoading ? <button onClick={handleCheckEmailVerified}> 已點擊email驗證，繼續完成註冊 </button> : null}
-                        {isLoading ? <button onClick={handleSendVerifyEmail}> 點擊重新寄送驗證信 </button> : null}
-                    </div>
-                </form>
             </div>
-            <hr />
-            <div className={styles.signupLinkPanel}>
-                <button onClick={() => navigate('/login')}>前往登入頁面</button>
+            <div className={styles.signupBtnPanel}>
+                    <div
+                        className={styles.signupBtn}
+                        disabled={signupDisabled}
+                        onClick={(e)=>{handleSignUp(e)}}
+                    >
+                        {isLoading ? "註冊進行中": "註冊"}
+                    </div>
+                    <div className={styles.verifyBtnPanel}>
+                        {isLoading ? <button type="button" onClick={handleCheckEmailVerified}> 已點擊email驗證，繼續完成註冊 </button> : null}
+                        {isLoading ? <button type="button" onClick={handleSendVerifyEmail}> 點擊重新寄送驗證信 </button> : null}
+                    </div>
+                    <button
+                        type="button"
+                        className={styles.toLogniPage}
+                        onClick={() => navigate('/login')}
+                    >前往 登入頁面
+                    </button>
             </div>
         </div>
     );

@@ -57,13 +57,19 @@
                @include base.input-setting;
             }
         }
-        button{
+        button {
             margin-top: 30px;
             width: 50%;
             height: 50px;
             border-radius: 25px;
         }
-    }
+        .loginBtn{
+            @include base.button-setting;
+            &:disabled{
+                @include base.disabled-button-setting;
+            }
+        }
+    }   
     .loginBtnPanel{
         width: 100%;
         display: flex;

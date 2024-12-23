@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isPersistSet, setIsPersistSet] = useState(false)
     const [isUsercollectionExist, setIsUsercollectionExist] = useState(false)
+    
     // 初始化持久性設定，先進行持久性設定
     useEffect(() => {
         const initializeAuth = async () => {
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }) => {
 
         return unsubscribe; // 清理監聽器
     }, []);
+
 
     return (
         <AuthContext.Provider

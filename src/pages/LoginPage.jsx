@@ -1,7 +1,7 @@
 import styles from "./LoginPage.module.scss";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import {auth, provide, setupUserCollection} from "../config/firebase";
+import {auth, provide, setupUserSettingCollection} from "../config/firebase";
 import { updateBtnDisabled } from "../fn";
 import Swal from "sweetalert2";
 import {db} from "../config/firebase"
@@ -106,6 +106,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
 
     const checkCollectionExist = async(user) => {
         const userUid = user.uid
+        console.log('user uid 為', userUid)
         //取得文件ref
         const docRef = doc(db, "users", userUid)
         //firestore 文件snap
@@ -116,7 +117,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                 setIsUsercollectionExist(true)
             }else{
                 console.log("user's collection no exist!")
-                setupUserCollection(user)
+                await setupUserSettingCollection(user, user.email, user.displayName)
                 setIsUsercollectionExist(true)
             }
         }catch(error){
@@ -132,7 +133,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                 loginInput.password
             );
             console.log('Login successful:', result.user);
-            await checkCollectionExist(result.user); 
+            await checkCollectionExist(result.user);
         } catch (error) {
             console.error("Failed to login with email and password:", error);
             let errorMessage = "輸入email 或 密碼錯誤"
@@ -170,7 +171,6 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
             const result = await signInWithPopup(auth, provide);
             console.log("result:",result)
             await checkCollectionExist(result.user);
-            
         }catch(error){
 
             console.error('登入錯誤', error.code)
@@ -192,16 +192,24 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
         }
     }
 
+   
+
+
     useEffect(()=>{
         updateBtnDisabled(isValid, setLoginDisabled)
         if(hasUserConfirmed){
             fetchLogininWithGoogle()
         }
-    },[isValid, hasUserConfirmed])
+        if(!loginDisabled){
+            console.log('登入案件尚未啟用')
+        }else{
+            console.log('登入案件尚未啟用')
+        }
+        
+    },[isValid, hasUserConfirmed, loginDisabled, navigate])
 
 
     return (
-        <>
         <div className={styles.loginWrapper}>
             <div className={styles.brandContainer}>
                 <div className={styles.brandTitle}>Refresh Refrige</div>
@@ -231,6 +239,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                 <button 
                     onClick={handleLoginWithEmailAndPassword}
                     disabled={loginDisabled}
+                    className={styles.loginBtn}
                 >登入
                 </button>
             </div>
@@ -256,9 +265,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                     setIsDarkMode(!isDarkMode)
                 }}>{isDarkMode ? "換淺色模式"  : "換深色模式"}</button>
             </div>
-        </div>
-            
-        </>
+        </div>            
     )
 }
 

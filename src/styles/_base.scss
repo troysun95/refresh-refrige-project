@@ -14,6 +14,7 @@
   --input-outline-color: #333;
   --button-border-color: #625e5e;
   --hover-color: #a29999;
+  --hint-color: #a59e9e;
 
   //通用：文字
   --title-fz:40px;
@@ -39,6 +40,9 @@ html.dark-mode{
   --input-outline-color: #bdbcbc;
   --button-border-color: #a59c9c;
   --hover-color: #dac4c4;
+  --hint-color: #a59e9e;
+  --error-color: rgb(243, 77, 77);
+  --warning-color: orange;
 }
   
 //常用 設定
@@ -71,9 +75,16 @@ html.dark-mode{
 @mixin button-setting{
   cursor: pointer;
   color: var(--text-color);
+  background-color: var(--brand-logo-color);
   border:1.5px solid var(--button-border-color);
+  font-weight: 600;
 }
 
+
+@mixin disabled-button-setting{
+  cursor:not-allowed;
+  color: #827979;
+}
 //text ...
 @mixin title-three-dots{
   text-overflow: ellipsis;

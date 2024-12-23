@@ -35,7 +35,7 @@ export const getAllDatas = async () => {
     return querySnapshot;
 }
 
-//使用者 email 驗證
+//使用者 email 驗證 
 export const validSingupEmail = async(user)=>{
   console.log("user for  validSingupEmail : ", user)
   try{
@@ -45,6 +45,7 @@ export const validSingupEmail = async(user)=>{
   }
 }
 
+//更新使用者顯示名稱
 export const updateUsername = async(user, newUsername, errorTitle, errorText)=>{
   try{
     await updateProfile (user, {
@@ -60,18 +61,6 @@ export const updateUsername = async(user, newUsername, errorTitle, errorText)=>{
   }
 }
 
-export const setupUserCollection =async(user, setupUsername)=>{
-  try{
-    await setDoc(doc(db, "users", user.uid),{
-      username: setupUsername,
-      createdAt: new Date(),
-  })
-  return true
-  }catch(error){
-    console.error("failed to set up user collection",error)
-    return false
-  }
-}
 
 
 export const deleteSignupUser =async(user)=>{
@@ -81,3 +70,24 @@ export const deleteSignupUser =async(user)=>{
     console.error("failed to delete user from firebase", error)
   }
 }
+
+
+export const setupUserSettingCollection = async (
+  user, 
+  email,  
+  username,
+) => {
+  try {
+    const  userSettingData =  {
+        email: email,
+        username: username,
+        createdAt: new Date(),
+      }
+      const newDocRef = doc(collection(doc(db, "users", user.uid), "userSetting"))
+      await setDoc(newDocRef, userSettingData);
+      return true
+  }catch (error) {
+    console.error("Failed to set up user setting collection", error);
+    return false
+  }
+};
