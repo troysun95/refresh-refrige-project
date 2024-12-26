@@ -105,18 +105,13 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
 
 
     const checkCollectionExist = async(user) => {
-        const userUid = user.uid
-        console.log('user uid 為', userUid)
-        //取得文件ref
-        const docRef = doc(db, "users", userUid)
+        const docRef = doc(db, "users", user.uid)
         //firestore 文件snap
         const docSnap = await getDoc(docRef);
         try{
             if(docSnap.exists()){
-                console.log("user's collection exist!")
                 setIsUsercollectionExist(true)
             }else{
-                console.log("user's collection no exist!")
                 await setupUserSettingCollection(user, user.email, user.displayName)
                 setIsUsercollectionExist(true)
             }
