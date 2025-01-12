@@ -16,4 +16,24 @@ export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
     setBtnState(btnDisabled)
 }
 
-//點擊後 input邊界修改
+//時間(Timestamp)換算
+export const getFormatedDate =(timeStampObj)=>{
+    if(!timeStampObj  || !timeStampObj.seconds ){
+        console.log('輸入時間格式不完整', timeStampObj)
+        //中斷
+        return
+    }
+    const nanoSecs = timeStampObj.nanoseconds;
+    const secs = timeStampObj.seconds;
+    const date = new Date((nanoSecs / 1e6) + secs * 1000)
+    return date.toLocaleDateString("zh-TW",{
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit",
+    })
+}
+
+
+
+
+

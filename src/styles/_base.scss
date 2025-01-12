@@ -4,7 +4,7 @@
 :root{
   //顏色
   --primary-color: #19a432;
-  --background-color: #fff;
+  --background-color: #f6f1f1;
   --modal-bgc-color:#e9e4e4;
   --brand-logo-color:#9DC384;
   --brand-title-color: #444;
@@ -13,9 +13,9 @@
   --warning-color: orange;
   --input-outline-color: #333;
   --button-border-color: #625e5e;
-  --hover-color: #a29999;
+  --hover-color: #a8a3a3;
   --hint-color: #a59e9e;
-
+  --thead-color: #DCE775;
   //通用：文字
   --title-fz:40px;
   --title-fw:600;
@@ -32,8 +32,8 @@
 // .dark-mode {//嘗試 提高權重
 html.dark-mode{
   --primary-color: #0a960f;
-  --background-color: #333;
-  --modal-bgc-color:#525050;
+  --background-color: #464545;
+  --modal-bgc-color:#8e8c8c;
   --brand-logo-color:#496337;
   --brand-title-color: #e0e00e;
   --text-color: #fff;
@@ -48,7 +48,7 @@ html.dark-mode{
 //常用 設定
 
 //grid
-@mixin grid-setting-autofill($cloumnsWidth, $rowHeight,$justify-content, $align-items){
+@mixin grid-setting-autofill($cloumnsWidth, $rowHeight, $justify-content, $align-items){
   display: grid;
   justify-content: $justify-content;
   align-items: $align-items;
@@ -57,12 +57,13 @@ html.dark-mode{
 }
 
 //icon
-@mixin icon-setting {
+@mixin icon-setting($width, $height, $fz) {
   border:none;
   border-radius: 50%;
   cursor: pointer;
-  width: 20px;
-  height: 20px;
+  width: $width;
+  height: $height;
+  font-size: $fz;
   &{
       &:hover {
           background-color: var(--hover-color);

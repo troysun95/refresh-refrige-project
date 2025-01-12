@@ -116,7 +116,7 @@
                         position: absolute;
                         top:5px;
                         right: 5px;
-                        @include base.icon-setting ;
+                        @include base.icon-setting(30px, 30px, 30px);
                         border: 1px solid #000;
                     }
                 }

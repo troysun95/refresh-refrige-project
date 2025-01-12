@@ -1,7 +1,7 @@
 import styles from "./LoginPage.module.scss";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import {auth, provide, setupUserSettingCollection} from "../config/firebase";
+import {auth, provide, setupUserSetting} from "../config/firebase";
 import { updateBtnDisabled } from "../fn";
 import Swal from "sweetalert2";
 import {db} from "../config/firebase"
@@ -47,7 +47,7 @@ const LoginWarningModal = ({setHasUserConfirmed, setIsModalOpen})=>{
 
 const LoginPage =({setIsDarkMode, isDarkMode})=>{
     const navigate = useNavigate();
-    const {setIsUsercollectionExist} = useAuth()
+    const {setIsUserSettingExist} = useAuth()
     const [loginInput, setLoginInput] = useState({
         email: "",
         password: ""
@@ -60,35 +60,28 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
         email: false,
         password: false
     })
-    const [loginDisabled, setLoginDisabled] = useState(true)
+    const [ loginDisabled, setLoginDisabled] = useState(true)
     const [ hasUserConfirmed, setHasUserConfirmed] = useState(false)
-    const [isModalOpened, setIsModalOpen]= useState(false)
+    const [ isModalOpened, setIsModalOpen]= useState(false)
     
     const handleInputChange = (event) => {
         const { name, value } = event.target;
-        //宣告變數儲存更新的 input 與相關數值
         let validationMessage = "";
         let isFieldValid = false;
     
-        // 檢查輸入是否為空
         if (value.trim().length === 0) {
             validationMessage = "此處不可以為空白";
         } else {
             if (name === "email") {
-                // 檢查 email 格式
                 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                 isFieldValid = emailRegex.test(value);
                 validationMessage = isFieldValid ? "" : "請輸入正確郵件格式";
-                console.log("檢視 email validation :", isFieldValid)
             } else if (name === "password") {
-                // 檢查密碼長度
                 isFieldValid = value.trim().length >= 6;
                 validationMessage = isFieldValid ? "" : "請輸入 6 個以上字元"
             }
         }
     
-    
-        // 更新狀態
         setLoginInput((prev) => ({
             ...prev,
             [name]:value,
@@ -104,16 +97,20 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
     };
 
 
-    const checkCollectionExist = async(user) => {
-        const docRef = doc(db, "users", user.uid)
-        //firestore 文件snap
+    const checkUserSettingExist = async(user) => {
+        //console.log("檢查 userSetting 文件 ?存在")
+        if(!user){
+            throw new Error("使用者登入尚未成功")
+        }
+        const docRef = doc(db, "users",user.uid, "userSetting", "userSetting")
         const docSnap = await getDoc(docRef);
         try{
             if(docSnap.exists()){
-                setIsUsercollectionExist(true)
+                setIsUserSettingExist(true)
             }else{
-                await setupUserSettingCollection(user, user.email, user.displayName)
-                setIsUsercollectionExist(true)
+                setIsUserSettingExist(false)
+                await setupUserSetting(user, user.email, user.displayName)
+                setIsUserSettingExist(true)
             }
         }catch(error){
             console.error("fialed to check collection exist",error)
@@ -127,8 +124,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                 loginInput.email,
                 loginInput.password
             );
-            console.log('Login successful:', result.user);
-            await checkCollectionExist(result.user);
+            await checkUserSettingExist(result.user);
         } catch (error) {
             console.error("Failed to login with email and password:", error);
             let errorMessage = "輸入email 或 密碼錯誤"
@@ -156,18 +152,16 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
     
 
     const handleLoginWithGoogle = ()=>{
-        //打開 modal
         setIsModalOpen(true)
     }
 
+    
     const fetchLogininWithGoogle = async()=>{
         setIsModalOpen(false)
         try{
             const result = await signInWithPopup(auth, provide);
-            console.log("result:",result)
-            await checkCollectionExist(result.user);
+            await checkUserSettingExist(result.user);
         }catch(error){
-
             console.error('登入錯誤', error.code)
             let errorMessage = '登入失敗，請稍後再試';
             if(error.code === "auth/cancelled-popup-request"){
@@ -194,11 +188,6 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
         updateBtnDisabled(isValid, setLoginDisabled)
         if(hasUserConfirmed){
             fetchLogininWithGoogle()
-        }
-        if(!loginDisabled){
-            console.log('登入案件尚未啟用')
-        }else{
-            console.log('登入案件尚未啟用')
         }
         
     },[isValid, hasUserConfirmed, loginDisabled, navigate])

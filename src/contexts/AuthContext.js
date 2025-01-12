@@ -11,13 +11,14 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isPersistSet, setIsPersistSet] = useState(false)
-    const [isUsercollectionExist, setIsUsercollectionExist] = useState(false)
+    const [isUserSettingExist, setIsUserSettingExist] = useState(false)
     
     // 初始化持久性設定，先進行持久性設定
     useEffect(() => {
         const initializeAuth = async () => {
             try {
                 await setPersistence(auth, browserLocalPersistence);
+                console.log('持久性設定完成');
             } catch (error) {
                 console.error("持久性設定失敗:", error.code, error.message);
             }
@@ -52,8 +53,8 @@ export const AuthProvider = ({ children }) => {
             value={{
                 isAuthenticated,
                 setIsAuthenticated,
-                isUsercollectionExist,
-                setIsUsercollectionExist,
+                isUserSettingExist,
+                setIsUserSettingExist,
             }}
         >
             {children}

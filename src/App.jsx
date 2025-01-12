@@ -12,15 +12,15 @@ import { useEffect, useState } from "react";
 function App() {
   const {
     isAuthenticated,
-    isUsercollectionExist,
+    isUserSettingExist,
   } = useAuth();
   
   const PrivateRoute = ({children})=>{
-    return (isAuthenticated && isUsercollectionExist) ? children : <Navigate to='/login' />
+    return (isAuthenticated && isUserSettingExist) ? children : <Navigate to='/login' />
   }
 
   const PublicRoute = ({children})=>{
-    return (isAuthenticated && isUsercollectionExist)  ? <Navigate to='/home' replace/> : children
+    return (isAuthenticated && isUserSettingExist)  ? <Navigate to='/home' replace/> : children
   }
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -28,13 +28,13 @@ function App() {
   useEffect(()=>{
     //只是要印出來看
     console.log('isAuthenticated: ', isAuthenticated)
-    console.log('isUsercollectionExist: ', isUsercollectionExist)
+    console.log('isUsercollectionExist: ', isUserSettingExist)
     if(isDarkMode){
       document.documentElement.classList.add('dark-mode')
     }else{
       document.documentElement.classList.remove('dark-mode')
     }
-  },[isAuthenticated, isUsercollectionExist, isDarkMode])
+  },[isAuthenticated, isUserSettingExist, isDarkMode])
   
   return (
     <>

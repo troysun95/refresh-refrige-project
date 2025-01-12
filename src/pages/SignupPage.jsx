@@ -4,7 +4,7 @@ import {
     auth, 
     updateUsername,  
     validSingupEmail, 
-    setupUserSettingCollection,
+    setupUserSetting,
 } from "../config/firebase";
 import { updateBtnDisabled } from "../fn";
 import { useEffect, useState } from "react";
@@ -15,7 +15,7 @@ import Swal from "sweetalert2";
 
 const SignupPage = () => {
     const navigate = useNavigate();
-    const { setIsUsercollectionExist } = useAuth();
+    const { setIsUserSettingExist } = useAuth();
 
     const [formData, setFormData] = useState({
         email: '',
@@ -138,7 +138,7 @@ const SignupPage = () => {
     const fetchSetupUserSetting = async () => {
         if(user && formData){
             try {
-                const isCollectionSetup = await setupUserSettingCollection(
+                const isCollectionSetup = await setupUserSetting(
                     user, 
                     formData.email,
                     formData.username
@@ -192,7 +192,7 @@ const SignupPage = () => {
     useEffect(()=>{
         if(hasVerifyEmailSent){ 
             if(stepSet.stepOne && stepSet.stepTwo && stepSet.stepThree ){
-                setIsUsercollectionExist(true)
+                setIsUserSettingExist(true)
                 Swal.fire({
                     title:'註冊成功',
                     text : `使用者 ${auth.currentUser.displayName} 資料庫已初始化`, 
