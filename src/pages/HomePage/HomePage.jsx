@@ -136,6 +136,8 @@ const HomePage = ()=>{
         if(!isFirstLogin.current){
             isFirstLogin.current = true
             initializeStorages(user);
+        }else{
+            console.log('首次登入已完成！')
         }
     },[isFirstLogin])
 
@@ -218,7 +220,7 @@ const HomePage = ()=>{
                 />):null
             }
             <div className="footer">
-                <span>all right reserved</span>
+                <span>版權...</span>
             </div>
         </div>
     )

@@ -304,4 +304,7 @@ td, th {
             border-radius: 30px;
         }
     }
+    .testArea{
+        @include base.loading-circle;
+    }
 }

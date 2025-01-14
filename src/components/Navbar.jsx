@@ -52,7 +52,6 @@ const NavbarItem = ({
                         null
                     )}
             </div>
-            
         </div>
     )
 }
@@ -111,42 +110,51 @@ const Navbar =()=>{
 
 
     return(
-        <div className={clsx(styles.navbarWrapperClosed, {[styles.navbarWrapperOpen]: isNavbarOpen})}>
-            <div className={styles.navbarContainer}>
-                {isNavbarOpen ? (
-                    <>
-                        <div 
-                            className={styles.navbarMenuBtn}
-                            onClick={handelNavbarOpen}
-                        >
-                            <Menu />
-                        </div>
-                        <div className={styles.navbar}>
-                          {navbarItems.map((item)=>{
-                            return(
-                                <NavbarItem
-                                    key={item.id}
-                                    itemTitle={item.title}
-                                    itemIcon={item.icon}
-                                />
-                            )
-                          })}
-                            <LogoutItem />
-                        </div>
-                    </>
-                    
-                ): (
-                    <>
-                        <div  
-                            className={styles.navbarMenuBtn}
-                            onClick={handelNavbarOpen}
-                        >
-                            <Menu/>
-                        </div>
-                    </>
-                )}
+        <>
+             <div className={clsx(styles.navbarWrapperClosed, {[styles.navbarWrapperOpen]: isNavbarOpen})}>
+                <div className={styles.navbarContainer}>
+                    {isNavbarOpen ? (
+                        <>
+                            <div 
+                                className={styles.navbarMenuBtn}
+                                onClick={handelNavbarOpen}
+                            >
+                                <Menu />
+                            </div>
+                            <div className={styles.navbar}>
+                            {navbarItems.map((item)=>{
+                                return(
+                                    <NavbarItem
+                                        key={item.id}
+                                        itemTitle={item.title}
+                                        itemIcon={item.icon}
+                                    />
+                                )
+                            })}
+                                <LogoutItem />
+                            </div>
+                        </>
+                        
+                    ): (
+                        <>
+                            <div  
+                                className={styles.navbarMenuBtn}
+                                onClick={handelNavbarOpen}
+                            >
+                                <Menu/>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
-        </div>
+            {/* navbar Mask */}
+            {isNavbarOpen ? (
+                <div className={styles.navbarmask}>
+                </div>): null
+            }
+            
+        </>
+       
     )
 }
 

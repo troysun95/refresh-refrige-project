@@ -221,8 +221,44 @@ html.dark-mode{
   }
 }
 
-@mixin table-tr-setting{
-  //white-space: nowrap; 
-  overflow: scroll; 
-  text-overflow: ellipsis; 
+
+@mixin loading-circle{
+  .loadginPanel{
+    width: 100%;
+    height: 100%;
+    background-color: var(--moadl-bgc);
+    position: relative;
+    .loadingCircle{
+        content: '';
+        width: 50%;
+        height: 50%;
+        border-radius: 50%;
+        background: linear-gradient(white, transparent,45);
+        background: linear-gradient(45deg, #ffffff,rgb(215, 213, 213) );
+        animation : rotate-clockwise 1.8s linear 0s infinite;
+        position: absolute;
+        top:10%;
+        right: 10%;
+    }
+    .innerCircle{
+        content: '';
+        position: absolute;
+        top: 10%;
+        right:10%;
+        background-color: var(--background);
+        width: 48%;
+        height: 48%;
+        border-radius: 50%;
+    }
+  }
+
+  @keyframes rotate-clockwise {
+      0%{
+          transform: rotate(0);
+      }
+      100%{
+          transform: rotate(360deg);
+      }
+  }
 }
+

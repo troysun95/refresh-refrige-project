@@ -9,7 +9,9 @@ const LoadingPanel =({ panelTitle, panelText})=>{
                 <h3>{panelTitle}</h3>
                 <p>{panelText}</p>
                 <div className={styles.loadingCircle}>
-                    OOO
+                    <div className={styles.outterCircle}>
+                        <div className={styles.innerCircle}></div>
+                    </div>
                 </div>
             </div>
         </div>
