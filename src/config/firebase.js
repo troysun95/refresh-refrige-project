@@ -399,6 +399,7 @@ export const getStorageItems = async (user, storageName, limitNumber = 0) => {
 //get  storage expired item by today
 export const getExpiredStorageItemsByToday = async (user, storageName) => {
   try {
+    console.log('傳入  storageName',storageName)
     const today  = new Date();
     //只比較日期部分
     today.setHours(0,0,0,0)
@@ -408,16 +409,18 @@ export const getExpiredStorageItemsByToday = async (user, storageName) => {
     const itemsCollectionRef = collection(db, `${storageCollectionPath}/${storageDocId}/items`)
     //存進格式應該是日期字串 , 或是本身用 firestore timestamp 筆
     const q = query(itemsCollectionRef, where('expired_date', "<=", fireStoreToday))
+    //console.log('檢測標準為：',fireStoreToday)
     const querySnapshot = await getDocs(q)
-    console.log(querySnapshot)
     const expiredItems = querySnapshot.docs.map((doc)=> doc.data());
+    console.log(`儲位 ${storageName}expiredItems get from firestore:`,expiredItems)
     if(expiredItems){
       return expiredItems
     }else{
       return []
     }
-    
   } catch (error) { 
     console.error(`Failed to get  storage expired items by today`,error )
   }
 }
+
+

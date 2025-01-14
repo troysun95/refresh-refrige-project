@@ -1,6 +1,6 @@
 
 import styles from './HomePage.module.scss'
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {v4 as uuidv4} from 'uuid';
 import { getStorageItems, createStorageItem} from '../../config/firebase';
 import { getFormatedDate } from '../../fn';
@@ -14,6 +14,8 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
         unit: "",
         expired_date: "",
     })
+    const [allInputValid, setAllInputValid]= useState(false)
+    const previewItemInitailize = useRef(false)
 
     const fetchStoragePreviewData = async()=>{
         if(storageName){
@@ -32,7 +34,7 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
                 console.log(`${storageName} preview datas:`,dataArr)
             }
         }else{
-            console.log('StorageCard storageName 尚未傳入')
+            console.log(`StorageCard ${storageName} 尚未傳入`)
         } 
     }
     
@@ -51,49 +53,51 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
         const jsCreateDate = new Date()
         const jsExpiredDate = new Date(storageItem.expired_date)
         console.log(jsExpiredDate, 'timestamp 格式', Timestamp.fromDate(jsExpiredDate))
-        const isInputValid = checkInputValid(storageItem)
-        if(!isInputValid){
-            alert("欄位請勿為空白")
+        const itemUuid = uuidv4();
+        const newItem = {
+            id: itemUuid,
+            name: storageItem.name,
+            amount : storageItem.amount,
+            unit : storageItem.unit,
+            expired_date: jsExpiredDate,
+            created_at: jsCreateDate,
+        }  
+        if(!allInputValid){
+            alert('建立項目欄位不可為空白')
             return
-        }else{
-            const itemUuid = uuidv4();
-            const newItem = {
-                id: itemUuid,
-                name: storageItem.name,
-                amount : storageItem.amount,
-                unit : storageItem.unit,
-                expired_date: jsExpiredDate,
-                created_at: jsCreateDate,
-            }
-            
-            await createStorageItem(user, storageName, newItem);
-
-          
-
-            if (onItemCreated) {
-                onItemCreated();
-            }
-            await fetchStoragePreviewData()
-            setStorageItem({
-                name:"",
-                amount: "",
-                unit: "",
-                expired_date: "",
-            })
         }
-       
+        await createStorageItem(user, storageName, newItem);
+
+        if (onItemCreated && (jsExpiredDate <= jsCreateDate)) {
+            onItemCreated(storageName);
+        }
+        
+        await fetchStoragePreviewData()
+        setStorageItem({
+            name:"",
+            amount: "",
+            unit: "",
+            expired_date: "",
+        })       
+        console.log('item input 清空')
     }
 
     const checkInputValid =(storageItem)=>{
-        return Object.values(storageItem).every((value) => value);
+        const isAllValid =  Object.values(storageItem).every((value) => value);
+        setAllInputValid(isAllValid)
     }
 
 
+
     useEffect(()=>{
-        if(storageName){
+        if(storageName && !previewItemInitailize.current ){
             fetchStoragePreviewData()
+            previewItemInitailize.current = true
         }
-    },[storageName])
+        if(storageItem){
+            checkInputValid(storageItem);
+        }
+    },[storageName, previewItems.length, storageItem])
 
     return (
         <div
@@ -125,7 +129,6 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
                                 </tr>
                             )
                         })
-                        
                     ):(
                         <tr>
                             <td colSpan="5" className={styles.noStorageItems}>
@@ -149,7 +152,7 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
                     </label>
                     <label>數量：
                         <input 
-                            type="text" 
+                            type="number" 
                             name="amount" 
                             value={storageItem.amount} 
                             onChange={handleItemInputChange}
@@ -173,15 +176,19 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
                         />
                     </label>
                 </div>
-                <button
-                    type="button"
-                    name={storageName}
-                    onClick={handleCreateStorageItem}
-                    className={styles.fastCreateBtn}
-                >快速建立
-                </button>
-            </div>
-            
+                <div className={styles.fastCreateBtnPanel}>
+                    <button
+                        type="button"
+                        name={storageName}
+                        onClick={handleCreateStorageItem}
+                        className={allInputValid ? styles.fastCreateBtn : styles.btnDisabled}
+                        disabled={!allInputValid}
+                    >
+                        快速建立
+                    </button>
+                </div>
+                   
+                </div>
         </div>
     )
 }

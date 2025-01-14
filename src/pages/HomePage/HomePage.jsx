@@ -1,5 +1,5 @@
 import styles from "./HomePage.module.scss"
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { 
     auth, checkDefaultStorageMarkSet, getExpiredStorageItemsByToday, 
     getAllStorageTitles, updateHasDefaultSet, createStorage,} from "../../config/firebase";
@@ -16,35 +16,53 @@ const HomePage = ()=>{
     const [isLoading, setIsLoading] = useState(false);
     const [storageNames, setStorageNames] = useState([]);
     const [expiredItems, setExpiredItems] = useState([]);
-    //或改用useRef 
-    const [itemsCount, setItmesCount] = useState();
+    const [expiredItemsCount, setExpiredItmesCount] = useState(0);
     const [storageCreated, setStorageCreated] = useState("");
-    //過期計算
-    const getAllExpiredItems = async()=>{
-        let allCount = 0
-        const expiredItems = await Promise.all(storageNames.map(async (storageName) => {
-            const data = await getExpiredStorageItemsByToday(user, storageName.storageTitle);
-            if (data.length) {
-                const dataObj = {[storageName.storageTitle]: data} 
-                allCount += data.length;
-                console.log(`${storageName.storageTitle} 項目數為： ${data.len}` )
-                return dataObj
-            }
-            return null; 
-        }))
-        const filteredExpiredItems = expiredItems.filter(item => item !== null);
-        console.log('印出 expired items', filteredExpiredItems, 'allCount', allCount)
-        await setExpiredItems(filteredExpiredItems)
-        await setItmesCount(allCount)
 
+    const isFirstLogin = useRef(false)
+    //過期項目
+
+    const getAllExpiredItems = async()=>{
+        if(!storageNames){
+            console.log("storageNames 尚未建立！ ")
+            return 
+        }else{
+            const expiredItems = await Promise.all(storageNames.map(async (storageName) => {
+                const data = await getExpiredStorageItemsByToday(user, storageName.storageTitle);
+                if (data.length) {
+                    const dataObj = {[storageName.storageTitle]: data} 
+                    return dataObj
+                }
+                return null; 
+            }))
+            const filteredExpiredItems = await expiredItems.filter(item => item !== null);
+            console.log('所有過期項目', filteredExpiredItems)
+            await setExpiredItems(filteredExpiredItems)
+            await setExpiredItmesCount(filteredExpiredItems.reduce((sum, item) => sum + Object.values(item)[0].length, 0));
+        }
     }
 
-
-
+    //更新單一 storage 過期項目
+    const updateStorageExpiredItems = async (storageName) => {
+        const newExpiredItems = await getExpiredStorageItemsByToday(user, storageName);
+        if (newExpiredItems && newExpiredItems.length > 0) { 
+            setExpiredItems((prevItems) => {
+                return prevItems.map((item) => {
+                    const storageTitle = Object.keys(item)[0]
+                    if (storageTitle === storageName) { 
+                        return {[storageName]: newExpiredItems}; 
+                    }
+                    return item; 
+                });
+            });
+            setExpiredItmesCount((prevCount)=> (prevCount + 1))
+        }
+    };
     //監聽 item 在 storage 中被建立
-    const handleItemCreated = async()=>{
-        console.log("有 item 被建立！")
-        await getAllExpiredItems();
+    const handleItemCreated = async(storageName)=>{
+        console.log("有 item 被建立在儲位：, ",storageName)
+        //await getAllExpiredItems();
+        await updateStorageExpiredItems(storageName)
     }
 
     //檢查預設 storage 設置 : 冷凍區, 冷藏區
@@ -68,6 +86,7 @@ const HomePage = ()=>{
     }
 
     const fetchAllStorageTitles =async()=>{
+        console.log('fetchAllStorageTitles trigger')
         const titlesArr = await getAllStorageTitles(user)
         if(titlesArr){
                 const newstorageNames = titlesArr.map((item)=>({
@@ -98,14 +117,6 @@ const HomePage = ()=>{
             if(user){
                 //檢查預設儲位
                 await checkDefaultStorageSetup();
-                //取得所有儲位名稱
-                await fetchAllStorageTitles();
-                if(storageNames && storageNames.length){
-                    //即期品 檢查
-                    console.log('')
-                    await getAllExpiredItems()
-                }
-                
             }else{
                 alert('使用者資料擷取錯誤！')
             }
@@ -116,11 +127,32 @@ const HomePage = ()=>{
         
     }
 
-    useEffect(()=>{
-        initializeStorages(user);
-    },[user, navigate, storageNames.length])
+    const  fetchAllExpiredItems = async () => {
+        console.log('fetchAllExpiredItems tridded')
+        await getAllExpiredItems()
+    }
 
+    useEffect(()=>{
+        if(!isFirstLogin.current){
+            isFirstLogin.current = true
+            initializeStorages(user);
+        }
+    },[isFirstLogin])
+
+    useEffect(()=>{
+        console.log('監聽過期項目變化', expiredItems)
+    },[expiredItems])
     
+
+    useEffect(()=>{
+        fetchAllStorageTitles()
+    },[])
+
+    useEffect(()=>{
+        if(storageNames && storageNames.length){
+            fetchAllExpiredItems()
+        }
+    },[storageNames])
 
     return(
         <div className={styles.homePage}>
@@ -140,7 +172,7 @@ const HomePage = ()=>{
                 <div className={styles.mainContent}> 
                     <ExpiredItemsPanel 
                         expiredItems={expiredItems}
-                        itemsCount={itemsCount}
+                        itemsCount={expiredItemsCount}
                     />
                     <hr className={styles.mainHr}/>
                     <h3 className={styles.previewPanelTitle}>儲位預覽區 ：</h3>

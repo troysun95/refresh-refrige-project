@@ -1,13 +1,13 @@
 import styles from "./LoginPage.module.scss";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { auth, provide, setupUserSetting} from "../config/firebase";
-import { updateBtnDisabled } from "../fn";
+import {auth, provide, setupUserSetting} from "../../config/firebase";
+import { updateBtnDisabled } from "../../fn";
 import Swal from "sweetalert2";
-import {db} from "../config/firebase"
+import {db} from "../../config/firebase"
 import { getDoc, doc} from "firebase/firestore";
 import {  useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import {Kitchen, Close} from "@mui/icons-material";
 
 const LoginWarningModal = ({setHasUserConfirmed, setIsModalOpen})=>{
@@ -161,6 +161,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
         try{
             const result = await signInWithPopup(auth, provide);
             await checkUserSettingExist(result.user);
+            console.log('登入依照 uid: ', result.user.uid)
         }catch(error){
             console.error('登入錯誤', error.code)
             let errorMessage = '登入失敗，請稍後再試';

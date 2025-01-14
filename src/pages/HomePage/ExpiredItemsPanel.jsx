@@ -1,16 +1,17 @@
 import {  useEffect, useState } from "react";
 import styles from './HomePage.module.scss'
-import {ArrowDropDown, ArrowRight} from "@mui/icons-material"
+import {ArrowDropDown, ArrowLeft,} from "@mui/icons-material"
 import { getFormatedDate } from "../../fn";
 
 const ExpiredItemsSection= ({items})=>{
     const sectionTitle = Object.keys(items)
     const sectionItems = items[sectionTitle]
     const [formatedItems, setFomatedItems] =useState([])
-    
+    const [isDropDownOpen, setIsDropDownOpen] = useState(false)
+
     const getFormatedItmes =  async() => {
         try {
-            console.log('sectionItems',sectionItems)
+            console.log(`儲位 ${sectionTitle} 過期項目：`,sectionItems)
             const newItems = sectionItems.map((item)=>{
                 const itemFormated = {
                     ...item, 
@@ -35,31 +36,42 @@ const ExpiredItemsSection= ({items})=>{
         <>
             {items  ? (
                 <div className={styles.expiredItemsSection}>
-                    <h3 className={styles.sectionTitle}>{sectionTitle}</h3>
-                    <table className={styles.expiredItems}>
-                        <thead>
-                            <tr className={styles.itemTitles}>
-                                <th className={styles.itemTitle}>名稱</th>
-                                <th className={styles.itemTitle}>數量</th>
-                                <th className={styles.itemTitle}>單位</th>
-                                <th className={styles.itemTitle}>到期日期</th>
-                                <th className={styles.itemTitle}>建立日期</th>
-                            </tr>
-                        </thead>
-                        <tbody >
-                            {formatedItems && formatedItems.map((formatedItem)=>{
-                                return  (
-                                        <tr className={styles.expiredItem} key={formatedItem?.id}>
-                                            <td className={styles.nameItem}>{formatedItem?.name}</td>
-                                            <td className={styles.amountItem}>{formatedItem?.amount}</td>
-                                            <td className={styles.unitItem}>{formatedItem?.unit}</td>
-                                            <td className={styles.dateItem}>{formatedItem?.expired_date}</td>
-                                            <td className={styles.dateItem}>{formatedItem?.created_at}</td>
-                                        </tr>
-                                )
-                            })}
-                        </tbody>    
-                    </table>
+                    <div className={styles.sectionTitlePanel}>
+                        <h3 
+                            className={styles.sectionTitle}
+                            onClick={()=>{setIsDropDownOpen(!isDropDownOpen)}} 
+                        >
+                            {sectionTitle}
+                        </h3>
+                        <span> 共 {sectionItems.length} 件</span>
+                    </div>
+                    <hr />
+                    {isDropDownOpen ? (
+                            <table className={styles.expiredItems}>
+                            <thead>
+                                <tr className={styles.itemTitles}>
+                                    <th className={styles.itemTitle}>名稱</th>
+                                    <th className={styles.itemTitle}>數量</th>
+                                    <th className={styles.itemTitle}>單位</th>
+                                    <th className={styles.itemTitle}>到期日期</th>
+                                    <th className={styles.itemTitle}>建立日期</th>
+                                </tr>
+                            </thead>
+                            <tbody >
+                                {formatedItems && formatedItems.map((formatedItem)=>{
+                                    return  (
+                                            <tr className={styles.expiredItem} key={formatedItem?.id}>
+                                                <td className={styles.nameItem}>{formatedItem?.name}</td>
+                                                <td className={styles.amountItem}>{formatedItem?.amount}</td>
+                                                <td className={styles.unitItem}>{formatedItem?.unit}</td>
+                                                <td className={styles.dateItem}>{formatedItem?.expired_date}</td>
+                                                <td className={styles.dateItem}>{formatedItem?.created_at}</td>
+                                            </tr>
+                                    )
+                                })}
+                            </tbody>    
+                        </table>
+                    ): null}
                 </div>
                 ):
                 null}
@@ -82,7 +94,7 @@ const ExpiredItemsPanel = ({expiredItems, itemsCount})=>{
 
     return(
         <>
-            {expiredItems && expiredItems.length > 0 ? (
+            {expiredItems && itemsCount && expiredItems.length > 0 ? (
                 <div className={styles.expiredItemsWrapper}>
                     <div className={styles.countPanel}>
                         <h3>過期項目總數 : 共{itemsCount}件</h3>
@@ -90,8 +102,7 @@ const ExpiredItemsPanel = ({expiredItems, itemsCount})=>{
                             className={styles.dropDownbtn}
                             onClick={hanleDropDownOpen}
                         >
-                            {isDropDownOpen ?   < ArrowDropDown />  : <ArrowRight/>}
-                            
+                            {isDropDownOpen ?   < ArrowDropDown />  : <ArrowLeft/>}
                         </div>
                     </div>
                     <div className={styles.expiredItemsContainer}>

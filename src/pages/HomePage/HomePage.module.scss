@@ -8,23 +8,25 @@
     display: flex;
     flex-direction: column;
     .hoemePageHeader{
-        width: 90%;
-        height: 80px;
-        position: absolute;
-        left: 10%;
+        width: 100%;
+        height: 120px;
+        display: flex;
+        justify-content: center;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 2px 2px 4px rgba($color: #000000, $alpha: 0.5);
         .brandLogo{
             height: 100%;
             display: flex;
-            justify-content: center;
             align-items: center;
             font-size: 25px;
+            cursor: pointer;
             span{
                 font-family: var(--brand-title-font-family);
             }
         }
     }
     .mainPanel{
-        margin-top: 80px;
+        margin-top: 20px;
         padding: 20px 15px;
         display: flex;
         flex-direction: column;
@@ -43,7 +45,7 @@
                 flex-direction: column;
                 align-items: center;
                 height: auto;
-                overflow-y: scroll;
+                overflow: scroll;
                 .countPanel{
                     width: 100%;
                     height: 30px;
@@ -64,29 +66,45 @@
                     display: flex;
                     flex-direction: column;
                     min-width: 550px;
-                    max-height: 600px;
-                    overflow: scroll;
                     .expiredItemsSection {
                         width: 100%; 
-                        max-height: 200px;
-                        overflow-y: scroll;
-                        .sectionTitle{
-                            height: 25px;
-                            padding: 5px;
-                            font-size: 25px;
+                        .sectionTitlePanel{
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: space-between;
+                            align-items: center;
+                            border-radius: 10px;
+                            height: 50px;
+                            &:hover{
+                                background-color: var(--hover-color);
+                            }
+                            .sectionTitle{
+                                width: 60%;
+                                height: 25px;
+                                padding: 5px 10px;
+                                font-size: 18px;
+                                width: 90%;
+                                border-radius: 10px;
+                                cursor: pointer;
+                                @include base.title-three-dots;
+                            }
+                            span{
+                                width: 20%;
+                                margin-left: 20px;
+                            }
+                        }
+                        hr{
+                            margin: 5px 10px;
                         }
                         .expiredItems {
                             width: 100%;
-                            border-collapse: collapse; 
+                            margin-top: 10px;
                             .itemTitles {
                                 background-color: #ddc3c3; 
                                 .itemTitle {
                                     padding: 8px;
                                     border: 1px solid var(--text-color); 
-                                    text-align: center;
-                                    position: sticky; 
-                                    top: 0;
-                                    z-index: 1;
+                                    text-align: center; 
                                     background-color: var(----thead-color);
                                 }
                             }
@@ -111,42 +129,118 @@
                 }
             }
             .storageCardWrapper{
-                @include base.grid-setting-autofill(minmax(400px, 1fr), 700px, center, center);
+                @include base.grid-setting-autofill(minmax(400px, 1fr), 650px, center, center);
                 grid-gap:20px;
+                align-items: start;
                 .storageCardContainer{
                     width: 100%;
                     box-shadow: 1px 1px 2px #000;
                     border-radius: 30px;
+                    border: 1px solid red;
                     .storageCardTitle{
                         margin:20px 0;
                         width: 100%;
                         font-size: 30px;
                         text-align: center;
                     }
-                    .previewItemsPanel{
-                        width: 100%;
-                        height: 200px;
-                        .itemTitleWrapper{
-                            width: 100%;
-                            border: 1px solid #000;
-                            background-color: var(--thead-color);
-                            .itemTitle{
-                                padding: 8px;
-                                font-size: var(--secondary-text-fz);
-                            }
-                        }
-                        .previewItem{
-                            td{
-                                padding:2px 8px;
-                                font-size: var(--secondary-text-fz);
-                                height: 20px;
-                                border-bottom: 1px solid gray;
-                            }
-                        }
-                    }
+                    // .previewItemsPanel{
+                    //     width: 100%;
+                    //     max-height: 200px;
+                    //     overflow: scroll;
+                    //     .itemTitleWrapper{
+                    //         width: 100%;
+                    //         border: 1px solid #000;
+                    //         background-color: var(--thead-color);
+                    //         .itemTitle{
+                    //             padding: 8px;
+                    //             font-size: var(--secondary-text-fz);
+                    //         }
+                    //     }
+                    //     .previewItem{
+                    //         width: 100%;
+                    //         td{
+                    //             text-align: center;
+                    //             width: 1rem;
+                    //             height: 25px;
+                    //             font-size: var(--secondary-text-fz);
+                    //             border: 1px solid var(--text-color);
+                    //         }
+                    //     }
+                    // }
+
+                    //gpt version
+                    /* 外層容器設定 */
+.storageCardContainer {
+    max-width: 100%;
+    overflow-x: auto; /* 表格左右滾動 */
+    overflow-y: hidden; /* 禁止上下滾動 (僅容器) */
+}
+
+/* 表格樣式 */
+.previewItemsPanel {
+    width: 100%; /* 表格寬度 */
+    border-collapse: collapse; /* 合併邊框 */
+    table-layout: fixed; /* 固定表格佈局，讓列寬有效 */
+    border: 1px solid #ccc; /* 表格邊框 */
+    white-space: nowrap; /* 禁止自動換行 */
+    overflow: hidden; /* 隱藏超出內容 */
+}
+
+/* 表頭和數據單元格樣式 */
+.previewItemsPanel th,
+.previewItemsPanel td {
+    text-align: left; /* 靠左對齊 */
+    padding: 10px;
+    border: 1px solid #ddd;
+    overflow: hidden; /* 隱藏超出內容 */
+    text-overflow: ellipsis; /* 超出內容顯示 ... */
+    white-space: nowrap; /* 禁止換行 */
+}
+
+//調整艱鉅 , 用 mixin
+
+.previewItemsPanel th:nth-child(1),
+.previewItemsPanel td:nth-child(1) {
+    width: 20%; /* 第一列寬度 */
+}
+
+.previewItemsPanel th:nth-child(2),
+.previewItemsPanel td:nth-child(2) {
+    width: 20%; /* 第二列寬度 */
+}
+
+.previewItemsPanel th:nth-child(3),
+.previewItemsPanel td:nth-child(3) {
+    width: 10%;; /* 第二列寬度 */
+}
+.previewItemsPanel th:nth-child(4),
+.previewItemsPanel td:nth-child(4) {
+    width: 25%;; /* 第二列寬度 */
+}
+.previewItemsPanel th:nth-child(5),
+.previewItemsPanel td:nth-child(5) {
+    width: 25%; /* 第二列寬度 */
+}
+
+/* 限制表格高度，允許上下滾動 */
+.storageCardContainer {
+    max-height: 400px; /* 設定表格高度 */
+    overflow-y: auto; /* 表格允許上下滾動 */
+}
+
+/* 禁止自動換行，文字溢出顯示省略號 */
+td, th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+
                     .fastCreatePanel{
                         width: 100%;
-                        height: 30%;
+                        height: 40%;
                         h3{
                             margin: 10px;
                             font-size: var(--main-text-fz);
@@ -154,7 +248,6 @@
                         .fastCreateInput{
                             display: flex;
                             flex-direction: column;
-                            border: 1px solid #000;
                             width: 90%;
                             margin-left: 20px;
                             input{
@@ -164,12 +257,28 @@
                                 width: 50%;
                             }
                         }
-                        .fastCreateBtn{
-                            width: 100px;
-                            height: 40px;
-                            border-radius: 20px;
-                            background-color: var(--primary-color);
+                        .fastCreateBtnPanel{
+                            display: flex;
+                            flex-direction: row;
+                            align-items: center;
+                            justify-content: center;
+                            width: 100%;
+                            height: 50px;
+                            button{
+                                width: 100px;
+                                height: 40px;
+                                margin: 10px 0;
+                                border-radius: 20px;
+                            }
+                            .fastCreateBtn{
+                                @include base.button-setting;
+                            }
+                            .btnDisabled{
+                                @include base.disabled-button-setting;
+
+                            }
                         }
+                        
                     }
                 }
             }
@@ -180,6 +289,8 @@
         padding: 0 15px;
         display: flex;
         flex-direction: column;
+        border-radius: 5px 5px 0 0 ;
+        box-shadow: 0px -1px 2px rgba($color: #000000, $alpha: 0.3);
         h3{
             width: 100%;
         }

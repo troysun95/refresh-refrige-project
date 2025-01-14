@@ -13,9 +13,11 @@
   --warning-color: orange;
   --input-outline-color: #333;
   --button-border-color: #625e5e;
+  --button-disabled-color: #92b87f;
   --hover-color: #a8a3a3;
   --hint-color: #a59e9e;
   --thead-color: #DCE775;
+
   //通用：文字
   --title-fz:40px;
   --title-fw:600;
@@ -84,6 +86,7 @@ html.dark-mode{
 
 @mixin disabled-button-setting{
   cursor:not-allowed;
+  background-color: var(--button-disabled-color);
   color: #827979;
 }
 //text ...
@@ -218,3 +221,8 @@ html.dark-mode{
   }
 }
 
+@mixin table-tr-setting{
+  //white-space: nowrap; 
+  overflow: scroll; 
+  text-overflow: ellipsis; 
+}
