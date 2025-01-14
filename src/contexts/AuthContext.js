@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
     const [isPersistSet, setIsPersistSet] = useState(false)
     const [isUserSettingExist, setIsUserSettingExist] = useState(false)
     
-    // 初始化持久性設定，先進行持久性設定
     useEffect(() => {
         const initializeAuth = async () => {
             try {
@@ -27,11 +26,13 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
     }, []);
 
-    // 設置使用者登入狀態監聽 (每次啟動，包含重新整理）
+    //監聽若沒有登出，維持登入狀態
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 setIsAuthenticated(true);
+                //新增延續 isUserSetting 驗證 , 或使用 ref 紀錄就好
+                setIsUserSettingExist(true);
                 if(!isPersistSet){
                     setPersistence(auth, browserLocalPersistence);
                     setIsPersistSet(true)

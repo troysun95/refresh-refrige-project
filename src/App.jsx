@@ -26,9 +26,9 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   //檢驗現有驗證狀態
   useEffect(()=>{
-    //只是要印出來看
+    //監聽驗證
     console.log('isAuthenticated: ', isAuthenticated)
-    console.log('isUsercollectionExist: ', isUserSettingExist)
+    console.log('isUserSettingExist: ', isUserSettingExist)
     if(isDarkMode){
       document.documentElement.classList.add('dark-mode')
     }else{
