@@ -1,12 +1,76 @@
 
 import styles from './HomePage.module.scss'
 import { useState, useEffect, useRef } from "react";
-import {v4 as uuidv4} from 'uuid';
-import { getStorageItems, createStorageItem} from '../../config/firebase';
+import { getStorageItems, createStorageItem, updateStorage, deleteStorage} from '../../config/firebase';
 import { getFormatedDate } from '../../fn';
-import { Timestamp } from 'firebase/firestore';
+import { useNavigatePage } from '../../contexts/NavigatePageContext';
+import Swal from 'sweetalert2';
+import {Delete, ModeRounded} from "@mui/icons-material"
 
-const StorageCard = ({storageName, user, onItemCreated })=>{
+const ModifyCardModal = ({
+    user, 
+    storageName, 
+    setIsModifyModalOpen, 
+    id,
+    onStorageNameUpdated,
+ })=>{
+    //頁面滾動禁止 ＋ 黑底背景
+    const [nameInput, setNameInput] = useState(storageName)
+    const handleNameInputChange =(e)=>{
+        const name = e.target.value;
+        setNameInput(name)
+    }
+
+    const handleUpdateStorage = async()=>{
+        const result = await updateStorage(user, id, storageName, nameInput)
+        if(result === "success"){
+            console.log("更新成功 確認 storageCard")
+            onStorageNameUpdated(id, nameInput)
+            setIsModifyModalOpen(false)
+        }
+    }
+
+
+    return(
+        <>
+            <div className={styles.modifyCardModal}>
+                <h3>修改儲位名稱</h3>
+                <input 
+                    type="text" 
+                    defaultValue={storageName}
+                    onChange={handleNameInputChange}
+                />
+                <div className={styles.btnPanel}>
+                    <button 
+                        onClick={()=>{setIsModifyModalOpen(false)}}
+                        className={styles.cancelBtn}
+                    >
+                        取消
+                    </button>
+                    {nameInput.trim().length ? (
+                        <button
+                            data-item-id={id}
+                            onClick={handleUpdateStorage}
+                        >
+                            修改
+                        </button>
+                        ):null
+                    }
+                </div>
+            </div>
+        </>
+    )
+}
+
+const StorageCard = ({
+    storageName,
+    user, 
+    onItemCreated, 
+    id ,
+    onStorageNameUpdated,
+    onStorageDeleted,
+})=>{
+    const {handelToStoragePage} = useNavigatePage()
     const [previewItems, setPreviewItems] = useState([])
     const [storageItem, setStorageItem ]= useState({
         name:"",
@@ -15,8 +79,9 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
         expired_date: "",
     })
     const [allInputValid, setAllInputValid]= useState(false)
+    const [isModifyModalOpen, setIsModifyModalOpen] = useState(false)
     const previewItemInitailize = useRef(false)
-
+    //storage preview data
     const fetchStoragePreviewData = async()=>{
         if(storageName){
             const dataArr = await getStorageItems(user, storageName, 5)
@@ -38,7 +103,7 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
         } 
     }
     
-
+    //sotarge item create
     const handleItemInputChange =(e)=>{
         const {name, value }= e.target;
         setStorageItem((prev)=>({
@@ -52,10 +117,7 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
         e.preventDefault();
         const jsCreateDate = new Date()
         const jsExpiredDate = new Date(storageItem.expired_date)
-        console.log(jsExpiredDate, 'timestamp 格式', Timestamp.fromDate(jsExpiredDate))
-        const itemUuid = uuidv4();
         const newItem = {
-            id: itemUuid,
             name: storageItem.name,
             amount : storageItem.amount,
             unit : storageItem.unit,
@@ -66,7 +128,19 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
             alert('建立項目欄位不可為空白')
             return
         }
-        await createStorageItem(user, storageName, newItem);
+        const result = await createStorageItem(user, storageName, newItem);
+
+        if(result === "success"){
+            Swal.fire({
+                text:"快速建立項目成功",
+                icon: 'success'
+            })
+        }else{
+            Swal.fire({
+                text:"快速建立項目失敗",
+                icon: 'error'
+            })
+        }
 
         if (onItemCreated && (jsExpiredDate <= jsCreateDate)) {
             onItemCreated(storageName);
@@ -78,8 +152,7 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
             amount: "",
             unit: "",
             expired_date: "",
-        })       
-        console.log('item input 清空')
+        })
     }
 
     const checkInputValid =(storageItem)=>{
@@ -88,6 +161,21 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
     }
 
 
+    //storage delete
+    const handleDeleteStorage = async (e) => {
+        const elementWithId = e.target.closest('[data-id]')
+        if(!elementWithId){
+            throw new Error('無法刪除儲位因為缺少對應 id')
+        }else{
+            const storageDocId = elementWithId.dataset.id;
+            const result = await deleteStorage(user, storageDocId)
+            if(result === "success"){
+                onStorageDeleted(storageName)
+            }else{
+                console.log('尚未成功刪除儲位')
+            }
+        }
+    }
 
     useEffect(()=>{
         if(storageName && !previewItemInitailize.current ){
@@ -103,8 +191,13 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
         <div
             className={styles.storageCardContainer}
         >
-            <div className={styles.storageCardTitle}>
-                {storageName}
+            <div className={styles.cardTitlePanel}>
+                <div
+                    className={styles.cardTitle}
+                    onClick={handelToStoragePage}
+                >
+                    {storageName}
+                </div>
             </div>
             <table className={styles.previewItemsPanel}>
                 <thead>
@@ -120,19 +213,19 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
                     {previewItems && previewItems.length ? (
                         previewItems.map((item)=>{
                             return(
-                                <tr className={styles.previewItem} key={item?.id}>
-                                    <td className={styles.nameItem}>{item?.name}</td>
-                                    <td className={styles.amountItem}>{item?.amount}</td>
-                                    <td className={styles.unitItem}>{item?.unit}</td>
-                                    <td className={styles.dateItem}>{item?.expired_date}</td>
-                                    <td className={styles.dateItem}>{item?.created_at}</td>
+                                <tr className={styles.previewItems} key={item?.id}>
+                                    <td className={styles.previewItem}>{item?.name}</td>
+                                    <td className={styles.previewItem}>{item?.amount}</td>
+                                    <td className={styles.previewItem}>{item?.unit}</td>
+                                    <td className={styles.previewItem}>{item?.expired_date}</td>
+                                    <td className={styles.previewItem}>{item?.created_at}</td>
                                 </tr>
                             )
                         })
                     ):(
-                        <tr>
+                        <tr  className={styles.previewItems} >
                             <td colSpan="5" className={styles.noStorageItems}>
-                                儲位尚無庫存
+                                <span>儲位尚無庫存</span>
                             </td>
                         </tr>
                         
@@ -187,8 +280,39 @@ const StorageCard = ({storageName, user, onItemCreated })=>{
                         快速建立
                     </button>
                 </div>
-                   
+                <hr />
+                <div 
+                    className={styles.toModifyCardPanel}
+                >
+                    <div 
+                        className={styles.iconPanel}
+                        onClick={()=>{setIsModifyModalOpen(true)}}
+                        data-id={id}
+                    >
+                        <ModeRounded/>
+                        <span className={styles.modifyStorageName} >修改儲位名稱</span>
+                    </div>
+                    <div className={styles.iconPanel}
+                        data-id={id}
+                        onClick={handleDeleteStorage}
+                    >
+                        <Delete/>
+                        <span  
+                            className={styles.delteStorage}
+                           
+                        >刪除儲位</span>
+                    </div>
                 </div>
+            </div>
+            {isModifyModalOpen ? (
+            <ModifyCardModal
+                user= {user}
+                id={id}
+                storageName={storageName}
+                setIsModifyModalOpen={setIsModifyModalOpen}
+                onStorageNameUpdated={onStorageNameUpdated}
+            />): null
+            }
         </div>
     )
 }

@@ -5,10 +5,11 @@ import {
   HomePage,
   ErrorPage,
   SignupPage,
+  StoragePage,
 } from "./pages/index";
 import { useAuth } from "./contexts/AuthContext";
 import { useEffect, useState } from "react";
-
+import {NavigatePageProvider} from './contexts/NavigatePageContext'
 function App() {
   const {
     isAuthenticated,
@@ -39,32 +40,40 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <NavigatePageProvider>
         <div className={styles.appContainer}>
-          <Routes>
-            {/* 私路由 */}
-            <Route path="/home" element={
-              <PrivateRoute>
-                <HomePage/>
-              </PrivateRoute>
-            }/>
-            {/* 公路由 */}
-            <Route path="/login" element ={
-              <PublicRoute>
-                <LoginPage
-                  isDarkMode={isDarkMode} 
-                  setIsDarkMode={setIsDarkMode}
-                />
-              </PublicRoute>
-            }/>
-             <Route path="/signup" element ={
-              <PublicRoute>
-                <SignupPage/>
-              </PublicRoute>
-            }/>
-            {/* 404錯誤頁面 */}
-            <Route path="*" element={<ErrorPage />} />
-          </Routes>
-        </div>
+            <Routes>
+              {/* 私路由 */}
+              <Route path="/home" element={
+                <PrivateRoute>
+                  <HomePage/>
+                </PrivateRoute>
+              }/>
+              <Route path="/storage/:storageName" element={
+                <PrivateRoute>
+                  <StoragePage/>
+                </PrivateRoute>
+              }/>
+
+              {/* 公路由 */}
+              <Route path="/login" element ={
+                <PublicRoute>
+                  <LoginPage
+                    isDarkMode={isDarkMode} 
+                    setIsDarkMode={setIsDarkMode}
+                  />
+                </PublicRoute>
+              }/>
+              <Route path="/signup" element ={
+                <PublicRoute>
+                  <SignupPage/>
+                </PublicRoute>
+              }/>
+              {/* 404錯誤頁面 */}
+              <Route path="*" element={<ErrorPage />} />
+            </Routes>
+          </div>
+        </NavigatePageProvider>
       </BrowserRouter>
     </>
   );

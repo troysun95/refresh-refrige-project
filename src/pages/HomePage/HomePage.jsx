@@ -2,23 +2,22 @@ import styles from "./HomePage.module.scss"
 import { useEffect, useRef, useState } from "react";
 import { 
     auth, checkDefaultStorageMarkSet, getExpiredStorageItemsByToday, 
-    getAllStorageTitles, updateHasDefaultSet, createStorage,} from "../../config/firebase";
+    getAllStorageTitles, updateHasDefaultSet, createStorage,
+    getStorageTitle,} from "../../config/firebase";
 import LoadingPanel from "../../components/LoadingPanel";
-import { useNavigate } from "react-router-dom";
-import { Kitchen} from "@mui/icons-material"
 import Navbar from "../../components/Navbar";
 import ExpiredItemsPanel from './ExpiredItemsPanel';
 import StorageCard from './StorageCard';
+import BrandHeader from '../../components/BrandHeader';
 
 const HomePage = ()=>{
-    const navigate = useNavigate()
     const user = auth.currentUser;
     const [isLoading, setIsLoading] = useState(false);
     const [storageNames, setStorageNames] = useState([]);
     const [expiredItems, setExpiredItems] = useState([]);
     const [expiredItemsCount, setExpiredItmesCount] = useState(0);
     const [storageCreated, setStorageCreated] = useState("");
-
+    const [checkMsg, setCheckMsg]= useState({})
     const isFirstLogin = useRef(false)
     //過期項目
 
@@ -36,7 +35,7 @@ const HomePage = ()=>{
                 return null; 
             }))
             const filteredExpiredItems = await expiredItems.filter(item => item !== null);
-            console.log('所有過期項目', filteredExpiredItems)
+            //console.log('所有過期項目', filteredExpiredItems)
             await setExpiredItems(filteredExpiredItems)
             await setExpiredItmesCount(filteredExpiredItems.reduce((sum, item) => sum + Object.values(item)[0].length, 0));
         }
@@ -73,7 +72,6 @@ const HomePage = ()=>{
             if(hasDefaultStorageMarkSet){
                 setIsLoading(false)
             }else{
-                //否則新增
                 await createStorage(user, "冷凍區")
                 await createStorage(user, "冷藏區")
                 await updateHasDefaultSet(user)
@@ -103,14 +101,53 @@ const HomePage = ()=>{
     const handleCreateNewStorage = async () => {
         await createStorage(user, storageCreated)
         await fetchAllStorageTitles();
+        setStorageCreated("")
     }
 
     const handleStorageCreatedChanged= async(e)=>{
         e.preventDefault();
         const inputName = e.currentTarget.value;
+        checkStorageNameCreated(inputName)
         setStorageCreated(inputName)
     }
 
+    const checkStorageNameCreated =(newName)=>{
+        const storageNameExist = storageNames.map(item => item.storageTitle)
+        console.log('storageNameExist',storageNameExist)
+        const result =  storageNameExist.includes(newName)
+        console.log(newName, result)
+        if(result){
+            setCheckMsg({
+                type: "error",
+                text:"儲位名稱已經被使用"
+            })
+        }else{
+            setCheckMsg({
+                type: "",
+                text:""
+            })
+        }
+    }
+
+    //storge updated
+    const  handleStorageUpdated = async(id, newStorageName)=>{
+        const newstorageNames = storageNames.map((item)=>(
+           item.storageDocId === id ? {
+            ...item,
+            storageTitle: newStorageName
+           }: {
+            ...item
+           }
+        ))
+        setStorageNames(newstorageNames)
+    }
+    
+
+    //storage deleted
+    const handleStorageDeleted = async (storageName) => {
+        const newstorageNames = storageNames.filter(item => item.storageTitle !== storageName)
+        setStorageNames(newstorageNames)
+    }
     
     const initializeStorages = async (user) => {
         try {
@@ -127,6 +164,7 @@ const HomePage = ()=>{
         
     }
 
+
     const  fetchAllExpiredItems = async () => {
         console.log('fetchAllExpiredItems tridded')
         await getAllExpiredItems()
@@ -140,10 +178,6 @@ const HomePage = ()=>{
             console.log('首次登入已完成！')
         }
     },[isFirstLogin])
-
-    useEffect(()=>{
-        console.log('監聽過期項目變化', expiredItems)
-    },[expiredItems])
     
 
     useEffect(()=>{
@@ -158,16 +192,11 @@ const HomePage = ()=>{
 
     return(
         <div className={styles.homePage}>
-            <div className={styles.hoemePageHeader}>
-                <div className={styles.brandLogo}
-                    onClick={()=>{navigate('/home')}}
-                >
-                    <Kitchen/>
-                    <span>Refresh Refige</span>
-                </div>
-               </div>
+            <BrandHeader/>
             <Navbar/>
-            <div className={styles.mainPanel}>
+            <div 
+                className={styles.mainPanel}
+            >
                 <div className={styles.welcomePanel}>
                     <span>歡迎, 使用者: {auth?.currentUser.displayName}</span>
                 </div>
@@ -182,10 +211,13 @@ const HomePage = ()=>{
                     <div className={styles.storageCardWrapper}>
                         {storageNames && storageNames.length ?(storageNames.map((storageName) => (
                                 <StorageCard 
+                                    id={storageName.storageDocId}
                                     key={storageName.storageDocId}
                                     storageName={storageName.storageTitle}
                                     user={user}
                                     onItemCreated={handleItemCreated}
+                                    onStorageNameUpdated={handleStorageUpdated}
+                                    onStorageDeleted={handleStorageDeleted}
                                 />
                                 ))
                             ):(
@@ -196,23 +228,26 @@ const HomePage = ()=>{
                                         value={storageCreated}
                                         onChange={handleStorageCreatedChanged}
                                     />
-                                    <button type="button" onClick={handleCreateNewStorage}>新增儲位</button>
+                                    {storageCreated.length ? (<button type="button" onClick={handleCreateNewStorage}>新增儲位</button>) : null}
                                 </div>
                             ) 
                         }
                     </div>
                 </div>
             </div>
-            <div className={styles.createStoragePanel}>
-                <h3>輸入名稱新增儲位</h3>
-                <input 
-                    type="text" 
-                    value={storageCreated}
-                    onChange={handleStorageCreatedChanged}
-                />
-                {storageCreated.length ? (<button type="button" onClick={handleCreateNewStorage}>新增儲位</button>) : null}
-                
-            </div>
+            {storageNames && storageNames.length ? (
+                <div className={styles.createStoragePanel}>
+                    <h3>輸入名稱新增儲位</h3>
+                    <input 
+                        type="text" 
+                        value={storageCreated}
+                        onChange={handleStorageCreatedChanged}
+                    />
+                    <span style={{color: `${checkMsg.type === "error" ? "red": "black"}`}}>{checkMsg?.text}</span>
+                    {storageCreated.length && checkMsg.type !== "error" ? (<button type="button" onClick={handleCreateNewStorage}>新增儲位</button>) : null}
+                </div>
+            ):null}
+            
             {isLoading ? (
                 <LoadingPanel 
                     panelTitle="資料處理中" 

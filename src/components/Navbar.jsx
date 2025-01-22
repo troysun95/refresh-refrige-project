@@ -5,11 +5,13 @@ import { useAuth } from "../contexts/AuthContext";
 import {auth, getAllStorageTitles} from "../config/firebase"
 import { signOut } from "firebase/auth";
 import clsx from "clsx";
-//import { useNavigate } from "react-router-dom";
-
+import { useNavigatePage } from "../contexts/NavigatePageContext";
 const NavbarItem = ({
     itemTitle,
-    itemIcon
+    itemIcon,
+    handleClickNavItem,
+    handelToSubnavItem,
+    isDropDownOpen,
 })=>{
     const user = auth.currentUser
     const [subItem, setSubItem] = useState();
@@ -23,27 +25,33 @@ const NavbarItem = ({
             setSubItem(null)
         }
     }
+
     useEffect(()=>{
         fetchStorageNames()
     },[user])
 
     return(
         <div className={styles.navItemContainer}> 
-            <div className={styles.navItem}>
+            <div 
+                className={styles.navItem}
+                onClick={handleClickNavItem}
+            >
                 <div className={styles.itemIcon}>
                     {itemIcon}
                 </div>
                 <span className={styles.itemTitle}>{itemTitle}</span>
             </div>
             <div className={styles.navSubItem}>
-                {subItem && subItem.length ? (
+
+                {isDropDownOpen && subItem && subItem.length ? (
                         subItem.map((item)=>{
                             return(
                                 <div 
                                     className={styles.subItem}
                                     key={item.storageDocId}
+                                    onClick={handelToSubnavItem}
                                 >
-                                    <span>{item.storageTitle}</span>
+                                    {item.storageTitle}
                                 </div>
                                     
                             )
@@ -84,21 +92,35 @@ const LogoutItem =()=>{
 }
 
 const Navbar =()=>{
+    const { handleToHomePage, hadndleToSearchPage, handelToStoragePage} = useNavigatePage();
     const [isNavbarOpen, setIsNavbarOpen]= useState(false)
+    const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+    const handleDropDownSwitch= ()=>{
+        setIsDropDownOpen(!isDropDownOpen)
+    }
+    const handleToStorageClicked = (e)=>{
+        handelToStoragePage(e) 
+        setIsNavbarOpen(false)
+    }
     const navbarItems = [{
         id:'navItem01',
         title: "首頁",
         icon: <Home/>,
+        handleClickNavItem: handleToHomePage,
     },{
         id:'navItem02',
         title: "儲位區",
         icon: <Storage/>,
+        handleClickNavItem: handleDropDownSwitch,
+        handelToSubnavItem: handleToStorageClicked
     },{
         id:'navItem03',
         title: "搜尋 菜價/食譜",
         icon: <Search/>,
+        //handleClickNavItem: hadndleToSearchPage,
     },]
 
+    
 
     const handelNavbarOpen=()=>{
         if(isNavbarOpen){
@@ -109,9 +131,11 @@ const Navbar =()=>{
     }
 
 
+
+
     return(
         <>
-             <div className={clsx(styles.navbarWrapperClosed, {[styles.navbarWrapperOpen]: isNavbarOpen})}>
+            <div className={clsx(styles.navbarWrapperClosed, {[styles.navbarWrapperOpen]: isNavbarOpen})}>
                 <div className={styles.navbarContainer}>
                     {isNavbarOpen ? (
                         <>
@@ -128,6 +152,9 @@ const Navbar =()=>{
                                         key={item.id}
                                         itemTitle={item.title}
                                         itemIcon={item.icon}
+                                        handleClickNavItem={item.handleClickNavItem}
+                                        handelToSubnavItem={item.handelToSubnavItem}
+                                        isDropDownOpen={isDropDownOpen}
                                     />
                                 )
                             })}
@@ -149,7 +176,11 @@ const Navbar =()=>{
             </div>
             {/* navbar Mask */}
             {isNavbarOpen ? (
-                <div className={styles.navbarmask}>
+                <div className={styles.navbarmask}
+                    onClick={()=>{
+                        setIsNavbarOpen(false)
+                    }}
+                >
                 </div>): null
             }
             

@@ -89,6 +89,7 @@ html.dark-mode{
   background-color: var(--button-disabled-color);
   color: #827979;
 }
+
 //text ...
 @mixin title-three-dots{
   text-overflow: ellipsis;
@@ -186,11 +187,17 @@ html.dark-mode{
 @mixin mask-setting{
   width: 100%;
   height: 100%;
+  z-index: 4;
   position: absolute;
   top:0;
-  background-color: #000;
-  opacity: .1;
-  z-index: 1;
+  left: 0;
+  background-color: rgba($color: #000, $alpha: 0.5);
+  &::before{
+      content: "";
+      @extend .navbarmask;
+      background-color: transparent;
+      pointer-events: none;
+  }
 }
 
 @mixin duration-panel-setting{
@@ -258,6 +265,16 @@ html.dark-mode{
       }
       100%{
           transform: rotate(360deg);
+      }
+  }
+}
+
+
+@mixin set-table-column-widths($columns) {
+  @each $index, $width in $columns {
+      th:nth-child(#{$index}),
+      td:nth-child(#{$index}) {
+          width: $width;
       }
   }
 }

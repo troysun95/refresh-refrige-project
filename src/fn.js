@@ -1,5 +1,7 @@
 //通用函式
 
+import { FeaturedPlayList } from "@mui/icons-material"
+
 //由 inuput 是否判斷為有效，切換按鈕可點擊性
 export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
     //設一個起始值
@@ -26,12 +28,14 @@ export const getFormatedDate =(timeStampObj)=>{
     const nanoSecs = timeStampObj.nanoseconds;
     const secs = timeStampObj.seconds;
     const date = new Date((nanoSecs / 1e6) + secs * 1000)
-    return date.toLocaleDateString("zh-TW",{
-        year:"numeric",
-        month:"2-digit",
-        day:"2-digit",
-    })
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
+
+
+
 
 
 

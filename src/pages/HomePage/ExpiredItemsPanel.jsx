@@ -1,6 +1,6 @@
 import {  useEffect, useState } from "react";
 import styles from './HomePage.module.scss'
-import {ArrowDropDown, ArrowLeft,} from "@mui/icons-material"
+import {ArrowDropDown, ArrowLeft, ErrorRounded,} from "@mui/icons-material"
 import { getFormatedDate } from "../../fn";
 
 const ExpiredItemsSection= ({items})=>{
@@ -96,8 +96,9 @@ const ExpiredItemsPanel = ({expiredItems, itemsCount})=>{
         <>
             {expiredItems && itemsCount && expiredItems.length > 0 ? (
                 <div className={styles.expiredItemsWrapper}>
+                    
                     <div className={styles.countPanel}>
-                        <h3>過期項目總數 : 共{itemsCount}件</h3>
+                        <div className={styles.panelTitle}> <ErrorRounded style={{color: "red", marginRight: "10px"}}/>過期項目總數 : 共{itemsCount}件</div>
                         <div 
                             className={styles.dropDownbtn}
                             onClick={hanleDropDownOpen}
