@@ -1,6 +1,3 @@
-//通用函式
-
-import { FeaturedPlayList } from "@mui/icons-material"
 
 //由 inuput 是否判斷為有效，切換按鈕可點擊性
 export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
@@ -34,7 +31,13 @@ export const getFormatedDate =(timeStampObj)=>{
     return `${year}-${month}-${day}`
 }
 
-
+//時間(js date)轉換
+export const formateDateFromJS = (jsDate)=>{
+    const year = jsDate.getFullYear();
+    const month = String(jsDate.getMonth() + 1).padStart(2, '0');
+    const day = String(jsDate.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
 
 
 

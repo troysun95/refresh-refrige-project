@@ -4,6 +4,7 @@
 :root{
   //顏色
   --primary-color: #19a432;
+  --secondary-color: #47b24c;
   --background-color: #f6f1f1;
   --modal-bgc-color:#e9e4e4;
   --brand-logo-color:#9DC384;
@@ -34,6 +35,7 @@
 // .dark-mode {//嘗試 提高權重
 html.dark-mode{
   --primary-color: #0a960f;
+  --secondary-color: #3f8662bd;
   --background-color: #464545;
   --modal-bgc-color:#8e8c8c;
   --brand-logo-color:#496337;
@@ -41,10 +43,11 @@ html.dark-mode{
   --text-color: #fff;
   --input-outline-color: #bdbcbc;
   --button-border-color: #a59c9c;
-  --hover-color: #dac4c4;
+  --hover-color: #a8a8a8;
   --hint-color: #a59e9e;
   --error-color: rgb(243, 77, 77);
   --warning-color: orange;
+  --thead-color: #aab35e;
 }
   
 //常用 設定
@@ -193,10 +196,9 @@ html.dark-mode{
   left: 0;
   background-color: rgba($color: #000, $alpha: 0.5);
   &::before{
-      content: "";
-      @extend .navbarmask;
-      background-color: transparent;
-      pointer-events: none;
+    content: "";
+    background-color: transparent;
+    pointer-events: none;
   }
 }
 

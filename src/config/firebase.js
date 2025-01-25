@@ -18,19 +18,21 @@ import Swal from "sweetalert2";
 
 // 環境變數設定
 const firebaseConfig = {
-    apiKey: process.env.REACT_APP_API_KEY,
-    authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-    projectId: process.env.REACT_APP_PROJECT_ID,
-    storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-    messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
-    appId: process.env.REACT_APP_APP_ID
-  };
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_APP_ID
+};
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app)
 
 export const auth = getAuth(app);
 export const provide = new GoogleAuthProvider();
+
+// firestore database
 
 //通用
 const checkIsDatabaseExist = async(checkDocRef, databaseName)=>{
@@ -367,10 +369,8 @@ export const getStorageDocId = async(user, storageName)=>{
    }
    
    const dataArr = Object.values(data)
-   console.log('檢核 dataArr', dataArr)
    const matchItem = dataArr.find(item => item.storageTitle === storageName)
    if(matchItem){
-    console.log(matchItem.storageDocId)
     return matchItem.storageDocId
    }else{
     console.log(`沒有以 ${storageName} 為 title 的欄位`)
@@ -541,10 +541,16 @@ export const createStorageItem = async (user, storageName, newItem) => {
     const itemDocRef = await addDoc(itemCollectionRef, newItem)
     await addItemDocId(user, storageDocId, itemDocRef.id);
     await updateDoc(itemDocRef, {id: itemDocRef.id})
-    return "success"
+    return {
+      "state": "success",
+      "id": itemDocRef.id
+    }
   } catch (error) {
     console.error(`Failed to create item in storage ${storageName}`, error);
-    return "failed"
+    return  {
+      "state": "failed",
+      "id":null,
+    }
   }
 };
 
@@ -587,7 +593,6 @@ export const getStorageItems = async (user, storageName, limitNumber = 0) => {
     const storageItems =  querySnapshot.docs.map((doc)=>({
       id:doc.id, ...doc.data()}
     ))
-    console.log("all of storageItems" ,storageItems)
     return  storageItems
   } catch (error) {
     if(!storageName){
@@ -625,7 +630,6 @@ export const updateStorageItem = async(user, storageName, itemDocId, newItem)=>{
 
 //delete
 export const deleteStorageItem = async(user, storageName, itemDocId) =>{
-  console.log('deleteStorageItem trigger by', user, storageName, itemDocId)
   try { 
       const itemDocPath = await getStorageItemPath(user, storageName, itemDocId)
       const itemDocRef = doc(db, itemDocPath)

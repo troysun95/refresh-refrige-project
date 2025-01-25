@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "./StoragePage.module.scss";
 import { Close } from "@mui/icons-material";
-import { getStorageItemById, auth, updateStorageItem } from "../../config/firebase";
+import { getStorageItemById, auth, updateStorageItem, createStorageItem } from "../../config/firebase";
 import { getFormatedDate } from "../../fn";
 
 const ItemModal =({
@@ -10,85 +10,162 @@ const ItemModal =({
     modalItemId,
     storageName,
     onItemUpdated,
+    onItemCreated,
+    isModalOpen,
 })=>{
-    const user = auth.currentUser
-    const [itemData, setItemData] =useState({
-        name:"",
+    
+    const user = auth.currentUser;
+    const [itemData, setItemData] = useState({
+        name: "",
         amount: "",
         unit: "",
         expired_date: "",
         created_at: "",
-        hasPicture: false,
-        notes: ""
-    })
-    const [notifyContent, setNotifyContent] = useState("")
+        notes: "",
+    });
+    const [checkMsg, setCheckMsg] = useState({
+        name: { type: "", text: " " },
+        amount: { type: "", text: "" },
+        unit: { type: "", text: "" },
+        expired_date: { type: "", text: "" },
+        notes: { type: "", text: " " },
+        created_at: { type: "", text: "" },
+    });
+    const [btnDisabled, setBtnDisabled] = useState(false);
+    const [hasInputChanged, setHasInputChanged] = useState(false);
+    const [notifyContent, setNotifyContent] = useState({ type: "", text: "" });
 
-    const handleCloseModal =()=>{
-        setIsModalOpen(false)
-    }
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
 
-    const handleInputChange= (e)=>{
-        const {name, value } = e.target;
-        setItemData((prev)=>({
-            ...prev,
-            [name]: value,
-        }))
-    }
+    const setInputValid = (name, value) => {
+        if (name !== "notes" && !value.trim()) {
+            return { type: "error", text: "欄位不可為空白" };
+        }
+        if (name === "amount" && value <= 0) {
+            return { type: "error", text: "數量必須大於 0 " };
+        }
+        if (name === "notes" && value.length > 500) {
+            return { type: "error", text: "字數不可超過 500" };
+        }
+        return { type: "", text: "" };
+    };
 
+    const handleInputChange = (e) => {
+        setHasInputChanged(true); 
+        const { name, value } = e.target;
+        setItemData((prev) => ({ ...prev, [name]: value }));
+        setCheckMsg((prev) => ({ ...prev, [name]: setInputValid(name, value) }));
+    };
 
+    const switchBtnDisabled = () => {
+        //欄位空格檢查
+        const checkMsgItems = Object.values(checkMsg);
+        const checkIsInputEmpty = () => {
+            return (itemData.name && itemData.amount && itemData.expired_date && itemData.unit) ? false : true;
+        };
+        //欄位有效值檢查
+        const isInputEmpty = checkIsInputEmpty();
+        const isAllValid = checkMsgItems.every(element => element.type !== "error");
 
-    const handleCreateItem =async()=>{
+        //結果只有改這一段
+        if (isToCreate) {
+            setBtnDisabled(!(isAllValid && !isInputEmpty)); 
+        } else {
+            setBtnDisabled(!(hasInputChanged && isAllValid && !isInputEmpty));
+        }
+    };
 
-    }
+    const handleCreateItem = async () => {
+        setNotifyContent({ type: "", text: "新增項目中" });
+        setBtnDisabled(true)
+        const jsCreateDate = new Date();
+        const jsExpiredDate = new Date(itemData.expired_date);
+        const newItem = { ...itemData, expired_date: jsExpiredDate, created_at: jsCreateDate };
+        const result = await createStorageItem(user, storageName, newItem);
 
-    const handleUpdateItemData = async()=>{
+        if (result.state === "success") {
+            setNotifyContent({ type: "", text: "項目新增成功" });
+            onItemCreated(newItem, result.id);
+            setTimeout(() => {
+                setNotifyContent({ type: "", text: "" });
+                setIsModalOpen(false);
+            }, 2000);
+        } else {
+            setNotifyContent({ type: "error", text: "項目新增失敗" });
+        }
+    };
+
+    const handleUpdateItemData = async () => {
+        setNotifyContent({ type: "", text: "項目更新中" });
+        setBtnDisabled(true)
         const newItemData = {
             ...itemData,
-            expired_date : new Date(itemData.expired_date),
+            expired_date: new Date(itemData.expired_date),
             created_at: new Date(itemData.created_at),
-        }
-        const updateState = await updateStorageItem(user, storageName, modalItemId, newItemData)
-        if(updateState === "success") {
-            setNotifyContent("更新項目資料成功")
-            if(onItemUpdated){
-                //回調重新 fethch item 
-                onItemUpdated(modalItemId)
+        };
+        const updateState = await updateStorageItem(user, storageName, modalItemId, newItemData);
+
+        if (updateState === "success") {
+            setNotifyContent({ type: "", text: "項目更新成功" });
+            if (onItemUpdated) {
+                onItemUpdated(modalItemId);
             }
-            setTimeout(()=>{
-                setIsModalOpen(false)
-            }, 3000)
-        }else{
-            setNotifyContent("更新項目資料失敗！")
+            setTimeout(() => {
+                setNotifyContent({ type: "", text: "" });
+                setIsModalOpen(false);
+            }, 1000);
+        } else {
+            setNotifyContent({ type: "error", text: "項目更新失敗" });
         }
-    }
-
-
-    const handleDeleteItem = async()=>{
-        //awiat 資料更新
-        //根據回傳條件，執行 notify
-    }
-
+    };
 
     const fetchStorageItemById = async () => {
-        const dataObj = await getStorageItemById(user, storageName, modalItemId)
-        if(dataObj){
+        const dataObj = await getStorageItemById(user, storageName, modalItemId);
+        if (dataObj) {
             const formatedData = {
                 ...dataObj,
                 expired_date: getFormatedDate(dataObj.expired_date),
-                created_at: getFormatedDate(dataObj.created_at)
-            }
-            setItemData(formatedData)
-        }else{
-            console.log('對應 id 資料不存在！')
+                created_at: getFormatedDate(dataObj.created_at),
+            };
+            setItemData(formatedData);
+        } else {
+            console.log('對應 id 資料不存在！');
         }
-    }
+    };
 
+    const initailItemData = () => {
+        setItemData({
+            name: "",
+            amount: "",
+            unit: "",
+            expired_date: "",
+            created_at: "",
+            notes: ""
+        });
+    };
 
-    useEffect(()=>{
-        if(!isToCreate && modalItemId){
-            fetchStorageItemById()
+    useEffect(() => {
+        if (!isToCreate && modalItemId) {
+            fetchStorageItemById();
         }
-    },[isToCreate, modalItemId])
+    }, [isToCreate, modalItemId]);
+
+    useEffect(() => {
+        if (!modalItemId) {
+            initailItemData();
+        }
+    }, [isToCreate]);
+
+    useEffect(() => {
+        setHasInputChanged(false);
+    }, [isModalOpen]);
+
+    useEffect(() => {
+        switchBtnDisabled();
+    }, [checkMsg, itemData, hasInputChanged, isToCreate]); 
+
     return(
         <>
             <div className={styles.modalWraper}>
@@ -115,6 +192,9 @@ const ItemModal =({
                             defaultValue={itemData.name}
                             onChange={handleInputChange}
                         />
+                        <span style={{color: `${checkMsg["name"].type === "error" ? "red" : "black"}`}}>
+                            {checkMsg["name"].text }
+                        </span>
                     </label>
                     <label>數量
                         <input 
@@ -123,6 +203,9 @@ const ItemModal =({
                             defaultValue={itemData.amount}
                             onChange={handleInputChange}
                         />
+                        <span style={{color: `${checkMsg["amount"].type === "error" ? "red" : "black"}`}}>
+                            {checkMsg["amount"].text }
+                        </span>
                     </label>                    
                     <label>單位
                         <input 
@@ -131,6 +214,9 @@ const ItemModal =({
                             defaultValue={itemData.unit}
                             onChange={handleInputChange}
                         />
+                        <span style={{color: `${checkMsg["unit"].type === "error" ? "red" : "black"}`}}>
+                            {checkMsg["unit"].text }
+                        </span>
                     </label>                    
                     <label>到期日期
                         <input 
@@ -139,17 +225,44 @@ const ItemModal =({
                             defaultValue={itemData.expired_date}
                             onChange={handleInputChange}
                         />
-                        <span>{itemData.expired_date}</span>
+                        <span style={{color: `${checkMsg["expired_date"].type === "error" ? "red" : "black"}`}}>
+                            {checkMsg["expired_date"].text }
+                        </span>
                     </label>    
                     {!isToCreate && (
-                        <div>建立日期
-                            <span>{itemData?.created_at}</span>
+                        <div >建立日期 : 
+                            <input 
+                                type="date" 
+                                name="created_at" 
+                                defaultValue={itemData.created_at}
+                                onChange={handleInputChange}
+                            />
+                            <span style={{color: `${checkMsg["created_at"].type === "error" ? "red" : "black"}`}}>
+                            {checkMsg["created_at"].text }
+                        </span>
                         </div>
                     )}            
-                    <div>
-                        <span>照片</span>   
+                    <div className={styles.itemNotesPanel}>
+                        <span>備註</span>
+                        <textarea 
+                            name="notes" 
+                            id="" 
+                            placeholder={`${!itemData.notes && "  為項目留下備註(字數上限為 500)"}`}
+                            defaultValue={itemData?.notes}
+                            onChange={handleInputChange}
+                            className={styles.itemNotesContainer}
+                        >
+                        </textarea>
+                        <span style={{color: `${checkMsg["notes"].type === "error" ? "red" : "black"}`}}>
+                            {checkMsg["notes"].text }
+                        </span>
+                    </div>
+                    {/* 圖片區 */}
+                    {/* <div>
+                        <span>圖片</span>   
                         {itemData?.hasPicture ? (
                             <>
+                                <button></button>
                                 <div>
                                     <img src="" alt="" />
                                 </div>
@@ -162,39 +275,40 @@ const ItemModal =({
                                 <div>(請留意照片容量限制)</div>
                             </>
                         )}
-                    </div>
-                    <div>
-                        <span>備註</span>
-                        <textarea 
-                            name="" 
-                            id="" 
-                            placeholder={!itemData.notes && "留下備註(字數上限為 500)"}
-                            defaultValue={itemData?.notes}
-
-                        >
-
-                        </textarea>
-                    </div>
+                    </div> */}
                 </div>
-                
                     <div className={styles.btnPanel}>
                         <button onClick={handleCloseModal}>取消</button>
                         {isToCreate ? (
-                                <button >新增</button>
+                                <button 
+                                    onClick={handleCreateItem}
+                                    disabled={btnDisabled}
+                                >   
+                                    新增
+                                </button>
                             ):(
-                                <button onClick={handleUpdateItemData}>更新</button>
+                                <button 
+                                    onClick={handleUpdateItemData}  
+                                    disabled={btnDisabled}
+                                >
+                                    更新
+                                </button>
                             )
                         }
-                       
                     </div>
-                <div className={styles.notifyPopout}>
-                    {notifyContent}
-                </div>
-                <div className={styles.modalMask}></div>
+                
+                    {notifyContent.text.length > 0  ?(
+                        <>
+                            <div className={styles.notifyPopout}>
+                                <span style={{color: `${notifyContent.type === "error" ? "red" : "blue"}`}}>
+                                    {notifyContent.text} 
+                                </span>
+                            </div>
+                        </>
+                    ):null }
             </div>
-            
         </>
     )
 }
 
-export default ItemModal
+export default ItemModal;

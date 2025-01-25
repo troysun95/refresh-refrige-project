@@ -95,6 +95,7 @@ const HomePage = ()=>{
         }else{
             console.log('尚未有儲位建立資料')
         }
+        setIsLoading(false)
     }
 
 
@@ -163,10 +164,10 @@ const HomePage = ()=>{
         }
         
     }
+    
 
 
     const  fetchAllExpiredItems = async () => {
-        console.log('fetchAllExpiredItems tridded')
         await getAllExpiredItems()
     }
 
@@ -181,6 +182,7 @@ const HomePage = ()=>{
     
 
     useEffect(()=>{
+        setIsLoading(true)
         fetchAllStorageTitles()
     },[])
 

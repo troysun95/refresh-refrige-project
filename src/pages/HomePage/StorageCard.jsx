@@ -130,7 +130,7 @@ const StorageCard = ({
         }
         const result = await createStorageItem(user, storageName, newItem);
 
-        if(result === "success"){
+        if(result.state === "success"){
             Swal.fire({
                 text:"快速建立項目成功",
                 icon: 'success'
@@ -146,7 +146,7 @@ const StorageCard = ({
             onItemCreated(storageName);
         }
         
-        await fetchStoragePreviewData()
+        fetchStoragePreviewData();
         setStorageItem({
             name:"",
             amount: "",
