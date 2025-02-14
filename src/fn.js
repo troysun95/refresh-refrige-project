@@ -15,15 +15,23 @@ export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
     setBtnState(btnDisabled)
 }
 
-//時間(Timestamp)換算
+//時間(Timestamp)換算: 
 export const getFormatedDate =(timeStampObj)=>{
-    if(!timeStampObj  || !timeStampObj.seconds ){
+    if(!timeStampObj  || (!timeStampObj._seconds && !timeStampObj.seconds) ){
         console.log('輸入時間格式不完整', timeStampObj)
         //中斷
         return
     }
-    const nanoSecs = timeStampObj.nanoseconds;
-    const secs = timeStampObj.seconds;
+
+    let nanoSecs = 0;
+    let secs = 0;
+    if(timeStampObj._seconds){
+        nanoSecs = timeStampObj._nanoseconds
+        secs = timeStampObj._seconds;
+    }else{
+        nanoSecs = timeStampObj.nanoseconds
+        secs = timeStampObj.seconds;
+    }
     const date = new Date((nanoSecs / 1e6) + secs * 1000)
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');

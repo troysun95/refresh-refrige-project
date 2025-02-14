@@ -47,6 +47,7 @@ const NavbarItem = ({
                         subItem.map((item)=>{
                             return(
                                 <div 
+                                    id={item.storageDocId}
                                     className={styles.subItem}
                                     key={item.storageDocId}
                                     onClick={handelToSubnavItem}

@@ -19,8 +19,8 @@ const HomePage = ()=>{
     const [storageCreated, setStorageCreated] = useState("");
     const [checkMsg, setCheckMsg]= useState({})
     const isFirstLogin = useRef(false)
-    //過期項目
 
+    //過期項
     const getAllExpiredItems = async()=>{
         if(!storageNames){
             console.log("storageNames 尚未建立！ ")
@@ -35,7 +35,7 @@ const HomePage = ()=>{
                 return null; 
             }))
             const filteredExpiredItems = await expiredItems.filter(item => item !== null);
-            //console.log('所有過期項目', filteredExpiredItems)
+            console.log('所有過期項目', filteredExpiredItems)
             await setExpiredItems(filteredExpiredItems)
             await setExpiredItmesCount(filteredExpiredItems.reduce((sum, item) => sum + Object.values(item)[0].length, 0));
         }
@@ -57,6 +57,7 @@ const HomePage = ()=>{
             setExpiredItmesCount((prevCount)=> (prevCount + 1))
         }
     };
+
     //監聽 item 在 storage 中被建立
     const handleItemCreated = async(storageName)=>{
         console.log("有 item 被建立在儲位：, ",storageName)
@@ -84,7 +85,6 @@ const HomePage = ()=>{
     }
 
     const fetchAllStorageTitles =async()=>{
-        console.log('fetchAllStorageTitles trigger')
         const titlesArr = await getAllStorageTitles(user)
         if(titlesArr){
                 const newstorageNames = titlesArr.map((item)=>({
@@ -114,9 +114,7 @@ const HomePage = ()=>{
 
     const checkStorageNameCreated =(newName)=>{
         const storageNameExist = storageNames.map(item => item.storageTitle)
-        console.log('storageNameExist',storageNameExist)
         const result =  storageNameExist.includes(newName)
-        console.log(newName, result)
         if(result){
             setCheckMsg({
                 type: "error",
@@ -165,8 +163,6 @@ const HomePage = ()=>{
         
     }
     
-
-
     const  fetchAllExpiredItems = async () => {
         await getAllExpiredItems()
     }

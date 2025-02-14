@@ -11,7 +11,6 @@ const ExpiredItemsSection= ({items})=>{
 
     const getFormatedItmes =  async() => {
         try {
-            console.log(`儲位 ${sectionTitle} 過期項目：`,sectionItems)
             const newItems = sectionItems.map((item)=>{
                 const itemFormated = {
                     ...item, 

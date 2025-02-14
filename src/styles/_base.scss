@@ -77,7 +77,6 @@ html.dark-mode{
 }
 
 
-//button,稍微修改一下 button 樣式
 @mixin button-setting{
   cursor: pointer;
   color: var(--text-color);
@@ -93,7 +92,7 @@ html.dark-mode{
   color: #827979;
 }
 
-//text ...
+//容器限制寬度，文字超出轉為 ... 
 @mixin title-three-dots{
   text-overflow: ellipsis;
   white-space: nowrap;

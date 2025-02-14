@@ -1,7 +1,9 @@
 import { 
-  deleteDoc, deleteField, limit, 
-  serverTimestamp, Timestamp,
-  onSnapshot,
+  deleteDoc, deleteField, serverTimestamp, Timestamp, onSnapshot,orderBy,
+  // limit,
+  // FieldValue,
+  // arrayUnion,
+  // listCollections,
 } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { 
@@ -15,6 +17,7 @@ import { collection,  getFirestore, setDoc, doc ,getDoc, getDocs, updateDoc, que
   addDoc, 
 } from "firebase/firestore";
 import Swal from "sweetalert2";
+import axios from "axios";
 
 // 環境變數設定
 const firebaseConfig = {
@@ -28,11 +31,42 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app)
-
 export const auth = getAuth(app);
 export const provide = new GoogleAuthProvider();
 
-// firestore database
+//claud functions 路徑
+
+//監聽網址，條證 firebase functions 路徑
+
+const isLocal = window.location.hostname === "localhost"
+const baseURL = isLocal 
+? "http://localhost:5001/test-demo1026/us-central1"
+: "https://us-central1-test-demo1026.cloudfunctions.net"
+
+const axiosInstance = axios.create({
+  baseURL: baseURL,
+})
+
+//指向 本地 funcions 路徑：
+
+
+
+//動態加上 idToken
+// axiosInstance.interceptors.request.use(async (config) => {
+//   const auth = getAuth();
+//   const user = auth.currentUser;
+
+//   if (user) {
+//     const idToken = await user.getIdToken();
+//     config.headers.Authorization = `Bearer ${idToken}`;
+//   }
+
+//   return config;
+// }, (error) => {
+//   return Promise.reject(error);
+// });
+
+// export default axiosInstance;
 
 //通用
 const checkIsDatabaseExist = async(checkDocRef, databaseName)=>{
@@ -50,6 +84,58 @@ const showUserError = async(errorTitle, errorMsg) =>{
       icon: "error"
     })
 }
+
+
+
+
+//fetch
+export const fetchFilterData = async (
+  user, 
+  storageId, 
+  limitNumber = 0,
+  sortBy, 
+  descending,
+  sortAfter = null,
+) => {
+  //console.log('fetchFilterData by storageId:', storageId)
+  try {
+    const userId = user.uid;
+    const collectionPath = `users/${userId}/storageCollection/${storageId}/items`; 
+    const  params = {
+      collectionPath: collectionPath,
+      limitNumber :limitNumber,
+      sortBy: sortBy,
+      descending: descending ? "desc" : "asc",
+      sortAfter : sortAfter,
+    }
+    
+
+    const response = await axiosInstance.get("/getFilteredData",{
+     params
+    })
+
+    console.log("fetchFilterData 成功！", response.data);
+    return {
+      data: response.data.data,
+      hasMore: response.data.hasMore,
+      sortAfter: response.data.sortAfter,
+    }
+  } catch (error) {
+    console.error("failed to fetch filter data", error);
+    return null;
+  }
+};
+
+
+//確認路徑從前端可以提取資料
+export const checkPathData = async(user, storageName)=>{
+  try {
+    console.log(user)
+  } catch (error) {
+    console.error(`failed to checkPathData of ${storageName}`)
+  }
+}
+
 
 //路徑
 const getStorageCollectionPath = (user)=> `users/${user.uid}/storageCollection`
@@ -253,42 +339,47 @@ export const updateHasDefaultSet = async(user)=>{
   }
 }
 
-export const updateStorage =async(user, storageDocId, oldStorageName, newStorageName)=>{
-    try {
-      //修改 storage doc 資料
-      const storageCollectionPath = getStorageCollectionPath(user)
-      const storageNameDocId = await getStorageNameDocId(user, oldStorageName)
-      const stoarageDocRef = doc(db, `${storageCollectionPath}/${storageDocId}/storageInfo/${storageNameDocId}`)
-      const docSnap = await getDoc(stoarageDocRef)
-      await updateDoc(stoarageDocRef, {
-        ...docSnap.data(),
-        storageName: newStorageName,
-        updated_at: serverTimestamp(),
-      })
 
-      //修改 docIds 對應 storage  資料
-      const docIdsDocPath = getDocIdsDocPath(user)
-      const docIdsRef = doc(db, docIdsDocPath)
-      const docIdsSnap = await getDoc(docIdsRef);
-      if(!docIdsSnap.exists()){
-        console.log('docIds 文件不存在')
+
+export const modifyStorageTitleOfStorage  = async(
+  user, 
+  oldStorageName, 
+  storageDocId, 
+  newStorageName
+)=>{
+  try {
+    //修改 storage doc 資料
+    const storageCollectionPath = getStorageCollectionPath(user)
+    const storageNameDocId = await getStorageNameDocId(user, oldStorageName)
+    const stoarageDocRef = doc(db, `${storageCollectionPath}/${storageDocId}/storageInfo/${storageNameDocId}`)
+    const docSnap = await getDoc(stoarageDocRef)
+    await updateDoc(stoarageDocRef, {
+      ...docSnap.data(),
+      storageName: newStorageName,
+      updated_at: serverTimestamp(),
+    })
+    return "success"
+  } catch (error) {
+    console.error(`failed to modify storageTitle into ${newStorageName} `, error)
+    return "failed"
+  }
+}
+
+export const updateStorage =async(
+  user, 
+  storageDocId, 
+  oldStorageName, 
+  newStorageName
+)=>{
+    try {
+      const isModifyInStorage = await modifyStorageTitleOfStorage(user, storageDocId, oldStorageName, newStorageName)
+      const isModifyOfIds = await modifyStorageTitleOfIds(user,storageDocId,newStorageName)
+      if(isModifyInStorage === "success" && isModifyOfIds === "success"){
+        console.log('修改儲位名稱成功')
+        return "success"
+      }else{
         return "failed"
       }
-      
-      const storageIdsFiled = docIdsSnap.data()[storageDocId]
-      if(!storageIdsFiled){
-        console.log('儲位對應 ids  文件不存在')
-        return "failed"
-      }
-      const newStorageIdsField = {
-        ...storageIdsFiled,
-        storageTitle: newStorageName,
-        updated_at: serverTimestamp(),
-      }
-      await updateDoc(docIdsRef, {
-        [`${storageDocId}`]: newStorageIdsField
-      })
-      return "success"
     } catch (error) {
       console.error(`failed to update storage into ${newStorageName}`, error)
       return "failed"
@@ -300,7 +391,7 @@ export const deleteStorage = async (user, storageDocId) => {
     //清除 storage doc 資料
     const storageCollectionPath = getStorageCollectionPath(user)
     const storageDocRef = doc(db, `${storageCollectionPath}/${storageDocId}`)
-    //監聽文件
+    //監聽文件 刪除 與否
     let isDeleted = false; 
     const unsubscribe = onSnapshot(storageDocRef, (docSnap) => {
         if (!docSnap.exists()) {
@@ -324,7 +415,6 @@ export const deleteStorage = async (user, storageDocId) => {
         return "failed";
     }
 
-    //清除 storage 的 docIds
     const docIdsDocPath = getDocIdsDocPath(user)
     const docIdsRef = doc(db, docIdsDocPath)
     const docIdsSnap = await getDoc(docIdsRef);
@@ -352,6 +442,7 @@ export const deleteStorage = async (user, storageDocId) => {
 
 
 //docIds
+  //storageDocId
 export const getStorageDocId = async(user, storageName)=>{
   try {
     const docIdsPath = getDocIdsDocPath(user)
@@ -383,6 +474,63 @@ export const getStorageDocId = async(user, storageName)=>{
 }
 
 
+export const setupStorageIds = async(
+  user, 
+  storageName, 
+  storageDocId, 
+  storageNameDocId
+)=>{
+  try {
+    const collectionRef = getDocIdsDocPath(user)
+    const docIdsRef = doc(db, collectionRef)
+    await setDoc(docIdsRef, {
+      [storageDocId]: {
+        storageTitle: storageName,
+        storageDocId:  storageDocId,
+        storageNameDocId: storageNameDocId,
+      }
+    },{merge: true })
+  } catch (error) {
+    console.error(`${storageName} 文件 id 更新失敗：`, error);
+  }
+}
+
+
+export const modifyStorageTitleOfIds = async (
+  user, 
+  storageDocId, 
+  newStorageName
+) => {
+  try {
+    const docIdsDocPath = getDocIdsDocPath(user)
+    const docIdsRef = doc(db, docIdsDocPath)
+    const docIdsSnap = await getDoc(docIdsRef);
+    if(!docIdsSnap.exists()){
+      console.log('docIds 文件不存在')
+      return "failed"
+    }
+    
+    const storageIdsFiled = docIdsSnap.data()[storageDocId]
+    if(!storageIdsFiled){
+      console.log('儲位對應 ids  文件不存在')
+      return "failed"
+    }
+    const newStorageIdsField = {
+      ...storageIdsFiled,
+      storageTitle: newStorageName,
+      updated_at: serverTimestamp(),
+    }
+    await updateDoc(docIdsRef, {
+      [`${storageDocId}`]: newStorageIdsField
+    })
+    return "success"
+  } catch (error) {
+    console.error(`failed to modify storageTitle into ${newStorageName} in storage's id: ${storageDocId}`, error)
+  }
+}
+
+
+//storageNameDocId
 export const getStorageNameDocId = async(user, storageName)=>{
   try {
     const docIdsPath = getDocIdsDocPath(user)
@@ -414,64 +562,8 @@ export const getStorageNameDocId = async(user, storageName)=>{
   }
 }
 
-export const setupStorageIds = async(user, storageName, storageDocId, storageNameDocId)=>{
-  try {
-    const collectionRef = getDocIdsDocPath(user)
-    const docIdsRef = doc(db, collectionRef)
-    await setDoc(docIdsRef, {
-      [storageDocId]: {
-        storageTitle: storageName,
-        storageDocId:  storageDocId,
-        storageNameDocId: storageNameDocId,
-      }
-    },{merge: true })
-  } catch (error) {
-    console.error(`${storageName} 文件 id 更新失敗：`, error);
-  }
-}
+//itemDocId
 
-
-export const addItemDocId = async(user, storageDocId, itemDocId)=>{
-  try {
-    const docIdsPath = getDocIdsDocPath(user)
-    const docIdsRef = doc(db, docIdsPath)
-    const docSnap = await getDoc(docIdsRef)
-    if(!docSnap.exists()){
-      throw new Error('無 docIds 文件')
-    }
-
-    const data = docSnap.data()[storageDocId]
-    if(!data){
-      throw new Error(`docIds 文件無 ${storageDocId} 文件`)
-    }
-
-    if(data && !data.itemIds) {
-      await updateDoc(docIdsRef, {
-        [storageDocId]:{
-          ...data,
-          itemIds:[]
-        }
-      })
-      console.log(`初始化 ${storageDocId} itemIds 欄位`)
-    }
-
-    const itemIdInfo = {
-      id: itemDocId,
-      created_at: serverTimestamp(),
-      updated_at: serverTimestamp(), 
-    }
-
-    await updateDoc(docIdsRef, {
-      [`${storageDocId}.itemIds.${itemDocId}`]: itemIdInfo,
-      [`${storageDocId}.updated_at`]: serverTimestamp()
-    });
-
-  } catch (error) {
-    console.error("failed to set up  itemDocId to docIds collection ", error)
-  }
-}
-
-//get storage item ids
 export const getItemIdsByStorageName = async (user, storageName) => {
   try {
     const docIdsDocPath = getDocIdsDocPath(user)
@@ -487,6 +579,73 @@ export const getItemIdsByStorageName = async (user, storageName) => {
   }
 }
 
+export const addItemDocId = async(user, storageDocId, itemDocId)=>{
+  console.log('addItemDocId trigger')
+  try {
+    const docIdsPath = getDocIdsDocPath(user)
+    const docIdsRef = doc(db, docIdsPath)
+    const docSnap = await getDoc(docIdsRef)
+    if(!docSnap.exists()){
+      throw new Error('無 docIds 文件')
+    }
+
+    const data = docSnap.data()[storageDocId]
+    if(!data){
+      throw new Error(`docIds 文件無 ${storageDocId} 文件`)
+    }
+
+    if(!data.itemIds) {
+      console.log('docIds itemIds 不存在！')
+      await updateDoc(docIdsRef, {
+        [`${storageDocId}.itemIds`]: {},
+      });
+      console.log(`初始化 ${storageDocId} itemIds 欄位`);
+    }
+
+    const itemIdInfo = {
+      id: itemDocId,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(), 
+    }
+
+    await updateDoc(docIdsRef, {
+      [`${storageDocId}.itemIds.${itemDocId}`]: itemIdInfo,
+      [`${storageDocId}.updated_at`]: serverTimestamp()
+    });
+
+    return "success"
+  } catch (error) {
+    console.error(`failed to add  itemDocId ${itemDocId} to docIds collection of stroageID :${storageDocId} `, error)
+    return "failed"
+  }
+}
+
+export const removeItemDocId = async (user, storageName, itemDocId) => {
+  try {
+    const docIdsPath = getDocIdsDocPath(user);
+    const docIdsRef = doc(db, docIdsPath);
+    const storageDocId = await getStorageDocId(user, storageName)
+
+    await updateDoc(docIdsRef, {
+      [`${storageDocId}.itemIds.${itemDocId}`]: deleteField(),
+    });
+
+    const docSnapOfIds = await getDoc(docIdsRef);
+    const dataOfIds = docSnapOfIds.data();
+
+    if (dataOfIds?.[storageDocId]?.itemIds?.[itemDocId]) {
+      return "failed";
+    } else {
+      return "success";
+    }
+  } catch (error) {
+    console.error(`Failed to delete item ${itemDocId} in ${storageName}`, error);
+    return "failed";
+  }
+};
+
+
+
 //storageTitle
 export const getStorageTitle = async (user, storageDocId) => {
   try {
@@ -495,7 +654,7 @@ export const getStorageTitle = async (user, storageDocId) => {
     const docSnap = await getDoc(docIdsRef)
     if(!docSnap.exists()){
       console.log('ids 文件不存在')
-      return null
+      return null;
     }
     const data = docSnap.data();
     const idsOfStorage = data[storageDocId]
@@ -530,34 +689,9 @@ export const getAllStorageTitles = async (user) => {
   }
 };
 
-export const createStorageItem = async (user, storageName, newItem) => {
-  try {
-    const storageDocId = await getStorageDocId(user, storageName)
-    if(!storageDocId){
-      throw new Error(`儲位 ${storageName} 無文件 id`)
-    }
-    const storageCollectionPath = getStorageCollectionPath(user)
-    const itemCollectionRef = collection(db, `${storageCollectionPath}/${storageDocId}/items`)
-    const itemDocRef = await addDoc(itemCollectionRef, newItem)
-    await addItemDocId(user, storageDocId, itemDocRef.id);
-    await updateDoc(itemDocRef, {id: itemDocRef.id})
-    return {
-      "state": "success",
-      "id": itemDocRef.id
-    }
-  } catch (error) {
-    console.error(`Failed to create item in storage ${storageName}`, error);
-    return  {
-      "state": "failed",
-      "id":null,
-    }
-  }
-};
 
 
-//get storage item by id
 export const getStorageItemById =async(user, storageName, itemDocId)=>{
-  //console.log(`getStorageItemById : ${itemDocId}`)
   try {
     const storageDocId  = await getStorageDocId(user, storageName);
     const storageCollectionPath = getStorageCollectionPath(user)
@@ -575,36 +709,129 @@ export const getStorageItemById =async(user, storageName, itemDocId)=>{
   }
 }
 
-//get storage items
-export const getStorageItems = async (user, storageName, limitNumber = 0) => {
+//向 firebase 請求
+export const getStorageItems = async (
+  user, 
+  storageName, 
+  sortBy,
+  limitNumber = 0,
+  descending = false,
+) => {
   try {
     const storageCollectionPath = getStorageCollectionPath(user)
     const storageDocId =  await getStorageDocId(user, storageName);
     const itemsCollectionRef = collection(db, `${storageCollectionPath}/${storageDocId}/items`)
+
     let q = query(itemsCollectionRef);
-    if(limitNumber > 0){
-      q = query(itemsCollectionRef, limit(limitNumber))
+
+    //根據參數調整請求資料
+    if(sortBy){
+      // 儲存在 請求 orderBy ，並使用官方給予 desc (近到早) || asc 方法
+      query = query(query, orderBy(sortBy, descending ? 'desc': 'asc'))
     }
+
+    if(limitNumber > 0){
+      //存在 請求 .limit裡面
+      query = query.limit(limitNumber)
+    }
+
     const querySnapshot = await getDocs(q);
+
+    //無資料返回 null
     if(querySnapshot.empty){
       return null
     }
-
     const storageItems =  querySnapshot.docs.map((doc)=>({
       id:doc.id, ...doc.data()}
     ))
+
     return  storageItems
   } catch (error) {
-    if(!storageName){
-      console.log(`尚未傳入 storageName ${storageName}`)
-    }else{
-      console.error(`Failed to get storage : ${storageName} all items`, error)
-    }
+    console.error(`failed to get storage items of storage ${storageName}`, error)
   }
 }
 
-//update 
-export const updateStorageItem = async(user, storageName, itemDocId, newItem)=>{
+//storage item
+export const createStorageItem = async(
+  user, 
+  newItem,
+  storageDocId,
+)=>{
+  try {
+    const {isItemSetup, itemDocId} = await setupStorageItem(user, newItem, storageDocId )
+    console.log('isItemSetup',isItemSetup,'itemDocId',itemDocId)
+    if(itemDocId && isItemSetup === "success"){
+      //將 id 放進 docIds
+      const isitemIdAdded = await addItemDocId(user, storageDocId,itemDocId)
+      console.log('isitemIdAdded',isitemIdAdded )
+      if(isitemIdAdded === "success"){
+        console.log('item 文件 id 新增成功')
+        return {
+          state: "success",
+          itemDocId : itemDocId
+        }
+      }else{
+        console.log('item 文件 id 新增失敗')
+        return "failed"
+      }
+    }else{
+      console.log('item新增至 storage 失敗')
+      return "failed"
+    }
+    
+    
+  } catch (error) {
+    console.error(`failed to create new item`, error)
+    return "failed"
+  }
+}
+
+
+export const setupStorageItem = async (user, newItem, storageDocId) => {
+  try {
+    const storageCollectionPath = getStorageCollectionPath(user);
+    const storageRef = doc(db, `${storageCollectionPath}/${storageDocId}`);
+    const docSnap = await getDoc(storageRef);
+    console.log('storageDocId',storageDocId)
+
+    if (!docSnap.exists()) {
+      console.log(`儲位文件 ${storageDocId} 不存在`);
+      return { isItemSetup: "failed" };
+    }
+
+    const storageItemsRef = collection(storageRef, "items");
+    const querySnapshot = await getDocs(storageItemsRef);
+
+    if (querySnapshot.empty) {
+      console.log("該 storage 不具有 items 子集合, 新增中...");
+    }
+
+    const itemDocSnap = await addDoc(storageItemsRef, { ...newItem });
+    const itemDocId = itemDocSnap.id;
+
+    //將 id 加回去 item 文件裡
+    const itemDocRef = doc(db, `${storageCollectionPath}/${storageDocId}/items/${itemDocId}`)
+    await updateDoc(itemDocRef, {
+      ...newItem,
+      id: itemDocId
+    })
+    return {
+      isItemSetup: "success",
+      itemDocId: itemDocId,
+    };
+  } catch (error) {
+    console.error(`Failed to set up new item: `, newItem, error);
+    return { isItemSetup: "failed" };
+  }
+};
+
+
+export const updateStorageItem = async(
+  user, 
+  storageName, 
+  itemDocId, 
+  newItem
+)=>{
   try {
     const storageItemPath = await getStorageItemPath(user, storageName, itemDocId)
     const itemDocRef = doc(db , storageItemPath)
@@ -615,7 +842,6 @@ export const updateStorageItem = async(user, storageName, itemDocId, newItem)=>{
     }
 
     const prevData = docSnap.data()
-    console.log('prevData', prevData)
     await updateDoc(itemDocRef, {
       ...prevData,
       ...newItem
@@ -627,27 +853,37 @@ export const updateStorageItem = async(user, storageName, itemDocId, newItem)=>{
   }
 }
 
-
-//delete
-export const deleteStorageItem = async(user, storageName, itemDocId) =>{
-  try { 
-      const itemDocPath = await getStorageItemPath(user, storageName, itemDocId)
-      const itemDocRef = doc(db, itemDocPath)
-      await deleteDoc(itemDocRef)
-      //確認已經移除
-      const docSnap = await getDoc(itemDocRef)
-      if(!docSnap.exists()){
-        return "success"
-      }
+export const deleteStorageItem = async (user, storageName, itemDocId) => {
+  try {
+    const isIdRemoved = await removeItemDocId(user, storageName, itemDocId);
+    const isItemRemoved = await removeItemFromStorage(user, storageName, itemDocId)
+    if(isIdRemoved === "success" && isItemRemoved === "success"){
+      return "success"
+    }else{
+      return "failed"
+    }
   } catch (error) {
-    console.error(`failed to delete item ${itemDocId} in ${storageName}`, error)
+    console.error(`failed to delete storage: ${storageName} item if id ${itemDocId}`, error)
+  }
+};
+
+export const removeItemFromStorage = async (user, storageName, itemDocId) => {
+  try {
+    const itemDocPath = await getStorageItemPath(user, storageName, itemDocId);
+    const itemDocRef = doc(db, itemDocPath);
+    await deleteDoc(itemDocRef);
+    return "success"
+  } catch (error) {
+    console.error(`failed to remove item of id :${itemDocId} from ${storageName}`, error)
     return "failed"
   }
 }
 
-//get storage items by filter (created , updated , nmae ...)
+//re-arrange
+//get storage items arranged (created , updated , nmae ...)
 
 
+//Expired 
 //get  storage expired item by today
 export const getExpiredStorageItemsByToday = async (user, storageName) => {
   try {
@@ -670,4 +906,7 @@ export const getExpiredStorageItemsByToday = async (user, storageName) => {
   }
 }
 
+//Search stroage items
+export const searchStorageItems =()=>{
 
+}

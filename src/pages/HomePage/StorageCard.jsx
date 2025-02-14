@@ -1,7 +1,7 @@
 
 import styles from './HomePage.module.scss'
 import { useState, useEffect, useRef } from "react";
-import { getStorageItems, createStorageItem, updateStorage, deleteStorage} from '../../config/firebase';
+import {  createStorageItem, updateStorage, deleteStorage, fetchFilterData} from '../../config/firebase';
 import { getFormatedDate } from '../../fn';
 import { useNavigatePage } from '../../contexts/NavigatePageContext';
 import Swal from 'sweetalert2';
@@ -14,7 +14,6 @@ const ModifyCardModal = ({
     id,
     onStorageNameUpdated,
  })=>{
-    //頁面滾動禁止 ＋ 黑底背景
     const [nameInput, setNameInput] = useState(storageName)
     const handleNameInputChange =(e)=>{
         const name = e.target.value;
@@ -29,7 +28,6 @@ const ModifyCardModal = ({
             setIsModifyModalOpen(false)
         }
     }
-
 
     return(
         <>
@@ -80,13 +78,16 @@ const StorageCard = ({
     })
     const [allInputValid, setAllInputValid]= useState(false)
     const [isModifyModalOpen, setIsModifyModalOpen] = useState(false)
+    const [isPreveiwLoading, setIsPreveiwLoading] = useState(false)
     const previewItemInitailize = useRef(false)
-    //storage preview data
+    //storage preview data: 最近新增 5 筆
     const fetchStoragePreviewData = async()=>{
         if(storageName){
-            const dataArr = await getStorageItems(user, storageName, 5)
-            if(dataArr && dataArr.length){
-                const formatesData = dataArr.map((item)=>{
+            setIsPreveiwLoading(true)
+            const {data} = await fetchFilterData(user, id, 5, "created_at", false)
+            
+            if(data && data.length){
+                const formatesData = data.map((item)=>{
                     const formateditem = {
                         ...item,
                         created_at: getFormatedDate(item.created_at),
@@ -95,8 +96,10 @@ const StorageCard = ({
                     return formateditem
                 })
                 setPreviewItems(formatesData)
+                setIsPreveiwLoading(false)
             }else{
-                console.log(`${storageName} preview datas:`,dataArr)
+                console.log(`${storageName} preview datas:`,data)
+                setIsPreveiwLoading(false)
             }
         }else{
             console.log(`StorageCard ${storageName} 尚未傳入`)
@@ -115,6 +118,10 @@ const StorageCard = ({
 
     const handleCreateStorageItem = async(e)=>{
         e.preventDefault();
+        const storageId = e.target.dataset.storageId
+        if(!storageId){
+            console.log('儲位沒有對應文件 id')
+        }
         const jsCreateDate = new Date()
         const jsExpiredDate = new Date(storageItem.expired_date)
         const newItem = {
@@ -128,7 +135,7 @@ const StorageCard = ({
             alert('建立項目欄位不可為空白')
             return
         }
-        const result = await createStorageItem(user, storageName, newItem);
+        const result = await createStorageItem(user, newItem, storageId);
 
         if(result.state === "success"){
             Swal.fire({
@@ -195,6 +202,7 @@ const StorageCard = ({
                 <div
                     className={styles.cardTitle}
                     onClick={handelToStoragePage}
+                    data-item-id={id}
                 >
                     {storageName}
                 </div>
@@ -210,25 +218,33 @@ const StorageCard = ({
                     </tr>
                 </thead>
                 <tbody>
-                    {previewItems && previewItems.length ? (
-                        previewItems.map((item)=>{
-                            return(
-                                <tr className={styles.previewItems} key={item?.id}>
-                                    <td className={styles.previewItem}>{item?.name}</td>
-                                    <td className={styles.previewItem}>{item?.amount}</td>
-                                    <td className={styles.previewItem}>{item?.unit}</td>
-                                    <td className={styles.previewItem}>{item?.expired_date}</td>
-                                    <td className={styles.previewItem}>{item?.created_at}</td>
-                                </tr>
-                            )
-                        })
+                    {isPreveiwLoading ? (
+                        <>
+                            <tr>
+                                <td>資料載入中...</td>
+                            </tr>
+                        </>
                     ):(
-                        <tr  className={styles.previewItems} >
-                            <td colSpan="5" className={styles.noStorageItems}>
-                                <span>儲位尚無庫存</span>
-                            </td>
-                        </tr>
-                        
+                        previewItems && previewItems.length ? (
+                            previewItems.map((item)=>{
+                                return(
+                                    <tr className={styles.previewItems} key={item?.id}>
+                                        <td className={styles.previewItem}>{item?.name}</td>
+                                        <td className={styles.previewItem}>{item?.amount}</td>
+                                        <td className={styles.previewItem}>{item?.unit}</td>
+                                        <td className={styles.previewItem}>{item?.expired_date}</td>
+                                        <td className={styles.previewItem}>{item?.created_at}</td>
+                                    </tr>
+                                )
+                            })
+                        ):(
+                            <tr  className={styles.previewItems} >
+                                <td colSpan="5" className={styles.noStorageItems}>
+                                    <span>儲位尚無庫存</span>
+                                </td>
+                            </tr>
+                            
+                        )
                     )}
                 </tbody>
             </table>
@@ -276,6 +292,7 @@ const StorageCard = ({
                         onClick={handleCreateStorageItem}
                         className={allInputValid ? styles.fastCreateBtn : styles.btnDisabled}
                         disabled={!allInputValid}
+                        data-storage-id={id}
                     >
                         快速建立
                     </button>

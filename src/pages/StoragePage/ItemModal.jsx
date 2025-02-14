@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "./StoragePage.module.scss";
 import { Close } from "@mui/icons-material";
-import { getStorageItemById, auth, updateStorageItem, createStorageItem } from "../../config/firebase";
+import { getStorageItemById, auth, updateStorageItem, createStorageItem, getStorageDocId } from "../../config/firebase";
 import { getFormatedDate } from "../../fn";
 
 const ItemModal =({
@@ -40,11 +40,17 @@ const ItemModal =({
     };
 
     const setInputValid = (name, value) => {
+        const numberRegrex =  /^[0-9]*\.?[0-9]*$/;
         if (name !== "notes" && !value.trim()) {
             return { type: "error", text: "欄位不可為空白" };
         }
-        if (name === "amount" && value <= 0) {
-            return { type: "error", text: "數量必須大於 0 " };
+        if (name === "amount" ) {
+            if(value <= 0 ){
+                return { type: "error", text: "數量必須大於 0 " };
+            }
+            if(!numberRegrex.test(value)){
+                return { type: "error", text: "輸入數值須為整數或小數" };
+            }
         }
         if (name === "notes" && value.length > 500) {
             return { type: "error", text: "字數不可超過 500" };
@@ -60,16 +66,12 @@ const ItemModal =({
     };
 
     const switchBtnDisabled = () => {
-        //欄位空格檢查
         const checkMsgItems = Object.values(checkMsg);
         const checkIsInputEmpty = () => {
             return (itemData.name && itemData.amount && itemData.expired_date && itemData.unit) ? false : true;
         };
-        //欄位有效值檢查
         const isInputEmpty = checkIsInputEmpty();
         const isAllValid = checkMsgItems.every(element => element.type !== "error");
-
-        //結果只有改這一段
         if (isToCreate) {
             setBtnDisabled(!(isAllValid && !isInputEmpty)); 
         } else {
@@ -78,16 +80,17 @@ const ItemModal =({
     };
 
     const handleCreateItem = async () => {
-        setNotifyContent({ type: "", text: "新增項目中" });
+        setNotifyContent({ type: "", text: "新增項目中" })
+        const storageDocId = await getStorageDocId(user, storageName)
         setBtnDisabled(true)
         const jsCreateDate = new Date();
         const jsExpiredDate = new Date(itemData.expired_date);
         const newItem = { ...itemData, expired_date: jsExpiredDate, created_at: jsCreateDate };
-        const result = await createStorageItem(user, storageName, newItem);
+        const result = await createStorageItem(user, newItem, storageDocId);
 
-        if (result.state === "success") {
+        if (result.state === "success" && result.itemDocId) {
             setNotifyContent({ type: "", text: "項目新增成功" });
-            onItemCreated(newItem, result.id);
+            onItemCreated();
             setTimeout(() => {
                 setNotifyContent({ type: "", text: "" });
                 setIsModalOpen(false);
@@ -111,6 +114,7 @@ const ItemModal =({
             setNotifyContent({ type: "", text: "項目更新成功" });
             if (onItemUpdated) {
                 onItemUpdated(modalItemId);
+                console.log('回傳 item Id ',modalItemId)
             }
             setTimeout(() => {
                 setNotifyContent({ type: "", text: "" });
@@ -185,7 +189,7 @@ const ItemModal =({
                     </div>
                 </div>
                 <div className={styles.contentContainer}>
-                    <label>名稱
+                    <label>名稱 :
                         <input 
                             type="text" 
                             name="name" 
@@ -196,7 +200,7 @@ const ItemModal =({
                             {checkMsg["name"].text }
                         </span>
                     </label>
-                    <label>數量
+                    <label>數量 :
                         <input 
                             type="number" 
                             name="amount" 
@@ -207,7 +211,7 @@ const ItemModal =({
                             {checkMsg["amount"].text }
                         </span>
                     </label>                    
-                    <label>單位
+                    <label>單位 :
                         <input 
                             type="text" 
                             name="unit" 
@@ -218,7 +222,7 @@ const ItemModal =({
                             {checkMsg["unit"].text }
                         </span>
                     </label>                    
-                    <label>到期日期
+                    <label>到期日期 :
                         <input 
                             type="date" 
                             name="expired_date" 
@@ -230,7 +234,7 @@ const ItemModal =({
                         </span>
                     </label>    
                     {!isToCreate && (
-                        <div >建立日期 : 
+                        <label className={styles.createAt}>建立日期 : 
                             <input 
                                 type="date" 
                                 name="created_at" 
@@ -239,8 +243,8 @@ const ItemModal =({
                             />
                             <span style={{color: `${checkMsg["created_at"].type === "error" ? "red" : "black"}`}}>
                             {checkMsg["created_at"].text }
-                        </span>
-                        </div>
+                            </span>
+                        </label>
                     )}            
                     <div className={styles.itemNotesPanel}>
                         <span>備註</span>

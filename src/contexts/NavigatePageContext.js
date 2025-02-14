@@ -11,6 +11,8 @@ export const NavigatePageProvider = ({ children }) => {
 
     const handelToStoragePage =(e)=>{
         const storageName = e.target.innerText;
+        const storageId = e.target.dataset.itemId;
+        localStorage.setItem('storageId', storageId)
         if(storageName){
             navigate(`/storage/${storageName}`)
         }
