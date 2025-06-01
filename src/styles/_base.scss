@@ -1,3 +1,4 @@
+
 /* base.scss */
 @use './reset.scss';
 
@@ -18,9 +19,12 @@
   --hover-color: #a8a3a3;
   --hint-color: #a59e9e;
   --thead-color: #DCE775;
-
+  --cancel-btn-color : #a7a7a7;
+  --divider-color:#9b8e8ede;
+  --delete-btn-color: rgb(222, 77, 77);
   //通用：文字
   --title-fz:40px;
+  --subTitle-fz: 30px;
   --title-fw:600;
   --main-text-fz: 20px;
   --secondary-text-fz:16px;
@@ -85,6 +89,11 @@ html.dark-mode{
   font-weight: 600;
 }
 
+
+@mixin button-notAllowed{
+  cursor: not-allowed;
+  background-color: var(--button-disabled-color);
+}
 
 @mixin disabled-button-setting{
   cursor:not-allowed;
@@ -280,3 +289,10 @@ html.dark-mode{
   }
 }
 
+@mixin divider {
+  //padding:  2px 10%;
+  margin: 5px 5%;
+  width: 90%;
+  height: 1px;
+  background-color: var(--divider-color);
+}

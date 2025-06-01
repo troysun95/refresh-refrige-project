@@ -1,198 +1,187 @@
 
 import styles from './HomePage.module.scss'
 import { useState, useEffect, useRef } from "react";
-import {  createStorageItem, updateStorage, deleteStorage, fetchFilterData} from '../../config/firebase';
+import {  updateStorageTitle, deleteStorage, getStorageSortedItems} from '../../config/firebase';
 import { getFormatedDate } from '../../fn';
 import { useNavigatePage } from '../../contexts/NavigatePageContext';
+import {Delete, ModeRounded, CommentRounded, Photo } from "@mui/icons-material";
 import Swal from 'sweetalert2';
-import {Delete, ModeRounded} from "@mui/icons-material"
 
 const ModifyCardModal = ({
     user, 
-    storageName, 
+    storageTitle, 
     setIsModifyModalOpen, 
     id,
-    onStorageNameUpdated,
+    onStorageChanged,
+    isToDelete,
  })=>{
-    const [nameInput, setNameInput] = useState(storageName)
+    const [nameInput, setNameInput] = useState(storageTitle)
+
     const handleNameInputChange =(e)=>{
         const name = e.target.value;
         setNameInput(name)
     }
 
+
+
     const handleUpdateStorage = async()=>{
-        const result = await updateStorage(user, id, storageName, nameInput)
+        const result = await updateStorageTitle(user, id, nameInput)
         if(result === "success"){
-            console.log("更新成功 確認 storageCard")
-            onStorageNameUpdated(id, nameInput)
+            onStorageChanged(id, nameInput)
             setIsModifyModalOpen(false)
+            Swal.fire({
+                title:"修改成功",
+                icon:"success"
+            })
+        }else{
+            Swal.fire({
+                title:"修改失敗",
+                icon:"error"
+            })
         }
+    }
+
+
+    const handleDeleteStorage = async () => {
+        if(!id){
+            Swal.fire({
+                title: "無法刪除儲位！",
+                text: "尚未取得儲位 id",
+                icon:"error"
+            })
+            setIsModifyModalOpen(false)
+            return 
+        }
+        const result = await deleteStorage(user, id)
+        if(result === "success"){
+            Swal.fire({
+                title: "儲位刪除成功",
+                icon:"success"
+            })
+            onStorageChanged(id, storageTitle)
+        }else{
+            Swal.fire({
+                title: "儲位刪除失敗",
+                icon:"error"
+            })
+        }
+    
     }
 
     return(
         <>
             <div className={styles.modifyCardModal}>
-                <h3>修改儲位名稱</h3>
-                <input 
-                    type="text" 
-                    defaultValue={storageName}
-                    onChange={handleNameInputChange}
-                />
-                <div className={styles.btnPanel}>
-                    <button 
-                        onClick={()=>{setIsModifyModalOpen(false)}}
-                        className={styles.cancelBtn}
-                    >
-                        取消
-                    </button>
-                    {nameInput.trim().length ? (
-                        <button
-                            data-item-id={id}
-                            onClick={handleUpdateStorage}
-                        >
-                            修改
-                        </button>
-                        ):null
-                    }
-                </div>
+                {isToDelete ? (
+                    <>
+                        <h3>確定刪除儲位 {storageTitle}  ? </h3>
+                        <div className={styles.btnPanel}>
+                            <button 
+                                onClick={()=>{setIsModifyModalOpen(false)}}
+                                className={styles.cancelBtn}
+                            >
+                                取消
+                            </button>
+                            <button 
+                                className={styles.deleteBtn}
+                                onClick={handleDeleteStorage}
+                            >確定</button>
+                        </div>
+                    </>
+                ):(
+                    <>
+                        <h3>修改儲位名稱</h3>
+                        <input 
+                            type="text" 
+                            defaultValue={storageTitle}
+                            onChange={handleNameInputChange} 
+                        />
+                        <div className={styles.btnPanel}>
+                            <button 
+                                
+                                onClick={()=>{setIsModifyModalOpen(false)}}
+                                className={styles.cancelBtn}
+                            >
+                                取消
+                            </button>
+                            {nameInput.trim().length ? (
+                                <button
+                                    className={styles.modifyBtn}
+                                    data-item-id={id}
+                                    onClick={handleUpdateStorage}
+                                >
+                                    修改
+                                </button>
+                                ):(
+                                    <button style={{fontSize: "18px", color:"red", cursor:"not-allowed"}}>
+                                        名稱不可為空白
+                                    </button>
+                                )
+                            }
+                            
+                        </div>
+                    </>
+                )}
             </div>
         </>
     )
 }
 
 const StorageCard = ({
-    storageName,
+    storageTitle,
     user, 
-    onItemCreated, 
     id ,
-    onStorageNameUpdated,
-    onStorageDeleted,
+    onStorageChanged,
 })=>{
     const {handelToStoragePage} = useNavigatePage()
     const [previewItems, setPreviewItems] = useState([])
-    const [storageItem, setStorageItem ]= useState({
-        name:"",
-        amount: "",
-        unit: "",
-        expired_date: "",
-    })
-    const [allInputValid, setAllInputValid]= useState(false)
+    const [isToDelete, setIsToDelete] = useState(false)
     const [isModifyModalOpen, setIsModifyModalOpen] = useState(false)
     const [isPreveiwLoading, setIsPreveiwLoading] = useState(false)
+    const [dataFetched, setDataFetched] = useState(false)
+
     const previewItemInitailize = useRef(false)
-    //storage preview data: 最近新增 5 筆
+
     const fetchStoragePreviewData = async()=>{
-        if(storageName){
+        if(storageTitle){
             setIsPreveiwLoading(true)
-            const {data} = await fetchFilterData(user, id, 5, "created_at", false)
-            
-            if(data && data.length){
-                const formatesData = data.map((item)=>{
-                    const formateditem = {
-                        ...item,
-                        created_at: getFormatedDate(item.created_at),
-                        expired_date : getFormatedDate(item.expired_date),
-                    }
-                    return formateditem
-                })
-                setPreviewItems(formatesData)
-                setIsPreveiwLoading(false)
+            const response = await getStorageSortedItems(user, id, "created_at", true, 5)
+            if(response.status === "failed"){
+                setDataFetched(false)
             }else{
-                console.log(`${storageName} preview datas:`,data)
-                setIsPreveiwLoading(false)
+                if(response.data.length > 0){
+                    const formatedData = response.data.map((item)=>{
+                        const formateItem = {
+                            ...item,
+                            expired_date: getFormatedDate(item.expired_date),
+                            created_at: getFormatedDate(item.created_at),
+                        }
+                        return formateItem
+                    })
+
+                    setPreviewItems(formatedData)
+
+                }else{
+                    setPreviewItems([])
+                }
+                setDataFetched(true)
             }
+            setIsPreveiwLoading(false)
         }else{
-            console.log(`StorageCard ${storageName} 尚未傳入`)
+            console.log(`StorageCard ${storageTitle} 尚未傳入`)
         } 
     }
+
     
-    //sotarge item create
-    const handleItemInputChange =(e)=>{
-        const {name, value }= e.target;
-        setStorageItem((prev)=>({
-            ...prev,
-            [name]: value
-        }))
-        
-    }
-
-    const handleCreateStorageItem = async(e)=>{
-        e.preventDefault();
-        const storageId = e.target.dataset.storageId
-        if(!storageId){
-            console.log('儲位沒有對應文件 id')
-        }
-        const jsCreateDate = new Date()
-        const jsExpiredDate = new Date(storageItem.expired_date)
-        const newItem = {
-            name: storageItem.name,
-            amount : storageItem.amount,
-            unit : storageItem.unit,
-            expired_date: jsExpiredDate,
-            created_at: jsCreateDate,
-        }  
-        if(!allInputValid){
-            alert('建立項目欄位不可為空白')
-            return
-        }
-        const result = await createStorageItem(user, newItem, storageId);
-
-        if(result.state === "success"){
-            Swal.fire({
-                text:"快速建立項目成功",
-                icon: 'success'
-            })
-        }else{
-            Swal.fire({
-                text:"快速建立項目失敗",
-                icon: 'error'
-            })
-        }
-
-        if (onItemCreated && (jsExpiredDate <= jsCreateDate)) {
-            onItemCreated(storageName);
-        }
-        
-        fetchStoragePreviewData();
-        setStorageItem({
-            name:"",
-            amount: "",
-            unit: "",
-            expired_date: "",
-        })
-    }
-
-    const checkInputValid =(storageItem)=>{
-        const isAllValid =  Object.values(storageItem).every((value) => value);
-        setAllInputValid(isAllValid)
-    }
-
-
-    //storage delete
-    const handleDeleteStorage = async (e) => {
-        const elementWithId = e.target.closest('[data-id]')
-        if(!elementWithId){
-            throw new Error('無法刪除儲位因為缺少對應 id')
-        }else{
-            const storageDocId = elementWithId.dataset.id;
-            const result = await deleteStorage(user, storageDocId)
-            if(result === "success"){
-                onStorageDeleted(storageName)
-            }else{
-                console.log('尚未成功刪除儲位')
-            }
-        }
-    }
 
     useEffect(()=>{
-        if(storageName && !previewItemInitailize.current ){
+        if(storageTitle && !previewItemInitailize.current ){
             fetchStoragePreviewData()
             previewItemInitailize.current = true
+            console.log(`儲位 ${storageTitle} items`, previewItems)
         }
-        if(storageItem){
-            checkInputValid(storageItem);
-        }
-    },[storageName, previewItems.length, storageItem])
+    },[storageTitle, previewItems.length])
+
+
 
     return (
         <div
@@ -204,106 +193,86 @@ const StorageCard = ({
                     onClick={handelToStoragePage}
                     data-item-id={id}
                 >
-                    {storageName}
+                    {storageTitle}
                 </div>
             </div>
-            <table className={styles.previewItemsPanel}>
-                <thead>
-                    <tr className={styles.itemTitleWrapper}>
-                        <th className={styles.itemTitle}>名稱</th>
-                        <th className={styles.itemTitle}>數量</th>
-                        <th className={styles.itemTitle}>單位</th>
-                        <th className={styles.itemTitle}>到期日期</th>
-                        <th className={styles.itemTitle}>建立日期</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {isPreveiwLoading ? (
-                        <>
-                            <tr>
-                                <td>資料載入中...</td>
-                            </tr>
-                        </>
+            <div className={styles.itemCardsPanel}>
+                {/* 這邊用 map 渲染 */}
+                {isPreveiwLoading ? (
+                    <div>
+                        資料載入中...
+                    </div>
+                ):(
+                    previewItems && previewItems.length ? (
+                        previewItems.map((item)=>{
+                            return(
+                                <div className={styles.itemCard} key={item?.itemId}>
+                                    <div className={styles.cardInfo}>
+                                        <div className={styles.cardTitle}>
+                                            <span className={styles.itemName}>
+                                                {item?.name}
+                                            </span>
+                                        </div>
+                                        <div className={styles.cardSubTitle}>
+                                            <div className={styles.cardAmount}>
+                                                <span className={styles.itemAmount}>
+                                                    {item?.amount}
+                                                </span>
+                                            </div>
+                                            <div className={styles.cardUnit}>
+                                                <span className={styles.itemUnit}>
+                                                    {item?.unit}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className={styles.cardDateContainer}>
+                                            <span className={styles.expiredDate}>
+                                                {item?.expired_date} 到期
+                                            </span>
+                                        </div>
+                                        {item.label && (
+                                            <div className={styles.itemLabel}>
+                                                {item.label}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className={styles.iconPanel}>
+                                        {item.notes && (
+                                            <div>
+                                                <CommentRounded/>
+                                            </div>
+                                        )}
+                                        {item.image && (
+                                            <div>
+                                                <Photo/>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                </div>
+                            )
+                        })
                     ):(
-                        previewItems && previewItems.length ? (
-                            previewItems.map((item)=>{
-                                return(
-                                    <tr className={styles.previewItems} key={item?.id}>
-                                        <td className={styles.previewItem}>{item?.name}</td>
-                                        <td className={styles.previewItem}>{item?.amount}</td>
-                                        <td className={styles.previewItem}>{item?.unit}</td>
-                                        <td className={styles.previewItem}>{item?.expired_date}</td>
-                                        <td className={styles.previewItem}>{item?.created_at}</td>
-                                    </tr>
-                                )
-                            })
-                        ):(
-                            <tr  className={styles.previewItems} >
-                                <td colSpan="5" className={styles.noStorageItems}>
-                                    <span>儲位尚無庫存</span>
-                                </td>
-                            </tr>
-                            
-                        )
-                    )}
-                </tbody>
-            </table>
+                        <div  className={styles.previewItems} >
+                            <div  className={styles.noStorageItems}>
+                                <span>{dataFetched ? "儲位尚無庫存":"預覽載入失敗，請稍後再試"}</span>
+                            </div>
+                        </div>             
+                    )
+                )}
+            </div>
             <div className={styles.fastCreatePanel}>
-                <h3>快速建立：</h3>
-                <div className={styles.fastCreateInput}>
-                    <label>名稱：
-                        <input 
-                            type="text"  
-                            name="name" 
-                            value={storageItem.name}
-                            onChange={handleItemInputChange}
-                        />
-                    </label>
-                    <label>數量：
-                        <input 
-                            type="number" 
-                            name="amount" 
-                            value={storageItem.amount} 
-                            onChange={handleItemInputChange}
-                        />
-                    </label>
-                    <label>單位：
-                        <input 
-                        type="text"  
-                        name="unit" 
-                        value={storageItem.unit}
-                        onChange={handleItemInputChange}
-                        />
-                    </label>
-                    <label>到期日期：
-                        <input 
-                            type="date" 
-                            name="expired_date" 
-                            value={storageItem.expired_date}
-                            className={styles.dateInput} 
-                            onChange={handleItemInputChange}
-                        />
-                    </label>
-                </div>
-                <div className={styles.fastCreateBtnPanel}>
-                    <button
-                        type="button"
-                        name={storageName}
-                        onClick={handleCreateStorageItem}
-                        className={allInputValid ? styles.fastCreateBtn : styles.btnDisabled}
-                        disabled={!allInputValid}
-                        data-storage-id={id}
-                    >
-                        快速建立
-                    </button>
-                </div>
+               
                 <hr />
                 <div 
                     className={styles.toModifyCardPanel}
                 >
                     <div 
                         className={styles.iconPanel}
-                        onClick={()=>{setIsModifyModalOpen(true)}}
+                        onClick={()=>{
+                            setIsModifyModalOpen(true)
+                            setIsToDelete(false)
+                        }}
                         data-id={id}
                     >
                         <ModeRounded/>
@@ -311,12 +280,14 @@ const StorageCard = ({
                     </div>
                     <div className={styles.iconPanel}
                         data-id={id}
-                        onClick={handleDeleteStorage}
+                        onClick={()=>{
+                            setIsModifyModalOpen(true)
+                            setIsToDelete(true)
+                        }}
                     >
                         <Delete/>
                         <span  
                             className={styles.delteStorage}
-                           
                         >刪除儲位</span>
                     </div>
                 </div>
@@ -325,9 +296,10 @@ const StorageCard = ({
             <ModifyCardModal
                 user= {user}
                 id={id}
-                storageName={storageName}
+                storageTitle={storageTitle}
                 setIsModifyModalOpen={setIsModifyModalOpen}
-                onStorageNameUpdated={onStorageNameUpdated}
+                onStorageChanged={onStorageChanged}
+                isToDelete={isToDelete}
             />): null
             }
         </div>

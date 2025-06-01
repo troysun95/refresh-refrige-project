@@ -1,6 +1,3 @@
-
-
-
 import { createContext, useContext, } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +20,7 @@ export const NavigatePageProvider = ({ children }) => {
     }
     
     const hadndleToSearchPage =()=>{
-        navigate('.search')
+        navigate('search')
     }
     
     return (

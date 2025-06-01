@@ -3,15 +3,14 @@ import styles from './HomePage.module.scss'
 import {ArrowDropDown, ArrowLeft, ErrorRounded,} from "@mui/icons-material"
 import { getFormatedDate } from "../../fn";
 
-const ExpiredItemsSection= ({items})=>{
-    const sectionTitle = Object.keys(items)
-    const sectionItems = items[sectionTitle]
+const ExpiredItemsSection= ({items, onButtonClicked})=>{
+    
     const [formatedItems, setFomatedItems] =useState([])
     const [isDropDownOpen, setIsDropDownOpen] = useState(false)
 
     const getFormatedItmes =  async() => {
         try {
-            const newItems = sectionItems.map((item)=>{
+            const newItems = items.items.map((item)=>{
                 const itemFormated = {
                     ...item, 
                     created_at: getFormatedDate(item.created_at),
@@ -25,11 +24,22 @@ const ExpiredItemsSection= ({items})=>{
         }
     }
 
+    const handleClick = (e)=>{
+        const name = e.target.name;
+        const elementWithId = e.target.closest.dateset("id")
+        if(!elementWithId){
+            console.log('無對應 id 元素')
+            return 
+        }else{
+            onButtonClicked(elementWithId.id, name)
+        }
+    }
+
     useEffect(()=>{
-        if(sectionItems){
+        if(items){
             getFormatedItmes();
         }
-    },[sectionItems.length])
+    },[items.length])
 
     return(
         <>
@@ -40,36 +50,59 @@ const ExpiredItemsSection= ({items})=>{
                             className={styles.sectionTitle}
                             onClick={()=>{setIsDropDownOpen(!isDropDownOpen)}} 
                         >
-                            {sectionTitle}
+                            {items.storageTitle}
                         </h3>
-                        <span> 共 {sectionItems.length} 件</span>
+                        <div>
+                            <span>共 {items.totalCount}</span>
+                        </div>
                     </div>
                     <hr />
                     {isDropDownOpen ? (
+                        <>
                             <table className={styles.expiredItems}>
-                            <thead>
-                                <tr className={styles.itemTitles}>
-                                    <th className={styles.itemTitle}>名稱</th>
-                                    <th className={styles.itemTitle}>數量</th>
-                                    <th className={styles.itemTitle}>單位</th>
-                                    <th className={styles.itemTitle}>到期日期</th>
-                                    <th className={styles.itemTitle}>建立日期</th>
-                                </tr>
-                            </thead>
-                            <tbody >
-                                {formatedItems && formatedItems.map((formatedItem)=>{
-                                    return  (
-                                            <tr className={styles.expiredItem} key={formatedItem?.id}>
-                                                <td className={styles.nameItem}>{formatedItem?.name}</td>
-                                                <td className={styles.amountItem}>{formatedItem?.amount}</td>
-                                                <td className={styles.unitItem}>{formatedItem?.unit}</td>
-                                                <td className={styles.dateItem}>{formatedItem?.expired_date}</td>
-                                                <td className={styles.dateItem}>{formatedItem?.created_at}</td>
-                                            </tr>
-                                    )
-                                })}
-                            </tbody>    
-                        </table>
+                                <thead>
+                                    <tr className={styles.itemTitles}>
+                                        <th className={styles.itemTitle}>名稱</th>
+                                        <th className={styles.itemTitle}>數量</th>
+                                        <th className={styles.itemTitle}>單位</th>
+                                        <th className={styles.itemTitle}>到期日期</th>
+                                        <th className={styles.itemTitle}>建立日期</th>
+                                    </tr>
+                                </thead>
+                                <tbody >
+                                    {formatedItems && formatedItems.map((formatedItem)=>{
+                                        return  (
+                                                <tr className={styles.expiredItem} key={formatedItem?.id}>
+                                                    <td className={styles.nameItem}>{formatedItem?.name}</td>
+                                                    <td className={styles.amountItem}>{formatedItem?.amount}</td>
+                                                    <td className={styles.unitItem}>{formatedItem?.unit}</td>
+                                                    <td className={styles.dateItem}>{formatedItem?.expired_date}</td>
+                                                    <td className={styles.dateItem}>{formatedItem?.created_at}</td>
+                                                </tr>
+                                        )
+                                    })}
+                                </tbody>    
+                            </table>
+                            <div data-id={items.items.storageId}>
+                                {items.items.error &&  <>
+                                    <span>{items.error}</span>
+                                    <button
+                                        onClick={handleClick}
+                                        name="recheck"
+                                    >
+                                        重新讀取
+                                    </button>
+                                </>}
+                                {items.hasMore && <>
+                                    <button
+                                        onClick={handleClick}
+                                        name="getmore"
+                                    >
+                                        載入更多
+                                    </button>
+                                </>}
+                            </div>
+                        </>
                     ): null}
                 </div>
                 ):
@@ -81,7 +114,13 @@ const ExpiredItemsSection= ({items})=>{
 
 
 
-const ExpiredItemsPanel = ({expiredItems, itemsCount})=>{
+const ExpiredItemsPanel = ({
+    isLoading,
+    fetchError,
+    expiredItems, 
+    onButtonClicked,
+    expiredItemsCount,
+})=>{
     const [isDropDownOpen, setIsDropDownOpen] = useState(false);
     const hanleDropDownOpen =()=>{
         if(!isDropDownOpen){
@@ -90,39 +129,59 @@ const ExpiredItemsPanel = ({expiredItems, itemsCount})=>{
             setIsDropDownOpen(false)
         }
     }
-
     return(
         <>
-            {expiredItems && itemsCount && expiredItems.length > 0 ? (
-                <div className={styles.expiredItemsWrapper}>
-                    
-                    <div className={styles.countPanel}>
-                        <div className={styles.panelTitle}> <ErrorRounded style={{color: "red", marginRight: "10px"}}/>過期項目總數 : 共{itemsCount}件</div>
-                        <div 
-                            className={styles.dropDownbtn}
-                            onClick={hanleDropDownOpen}
-                        >
-                            {isDropDownOpen ?   < ArrowDropDown />  : <ArrowLeft/>}
+            {isLoading.expiredPanel ? (
+                <span>過期項目檢查中...</span>
+            ): (
+                expiredItems  && expiredItems.length > 0 ? (
+                    <div className={styles.expiredItemsWrapper}>
+                        <div className={styles.countPanel}>
+                            <div className={styles.panelTitle}> 
+                                {expiredItemsCount > 0 ? (
+                                    <>
+                                        <ErrorRounded style={{color: "red", marginRight: "10px"}}/>
+                                        過期項目總數 : 共{expiredItemsCount}件
+                                    </>
+                                ): (
+                                    <>
+                                    {fetchError.expiredPanel  ? " !!過期項目檢查失敗": "無過期項目"}
+                                    </>
+                                )}
+                            </div>
+                            {expiredItemsCount > 0 ? (
+                                <div 
+                                    className={styles.dropDownbtn}
+                                    onClick={hanleDropDownOpen}
+                                >
+                                    {isDropDownOpen ?   < ArrowDropDown />  : <ArrowLeft/>}
+                                </div>
+                                ):null
+                            }
+                        </div>
+                        <div className={styles.expiredItemsContainer}>
+                            {isDropDownOpen ? (
+                                expiredItems.map((items,index)=>{
+                                    return(
+                                        <ExpiredItemsSection
+                                            key={`expiredSection-${(index + 1)}`}
+                                            items={items}
+                                            onButtonClicked={onButtonClicked}
+                                        />
+                                    )
+                                })
+                            ):null}
                         </div>
                     </div>
-                    <div className={styles.expiredItemsContainer}>
-                        {isDropDownOpen ? (
-                            expiredItems.map((items,index)=>{
-                                return(
-                                    <ExpiredItemsSection
-                                        key={`expiredSection-${(index + 1)}`}
-                                        items={items}
-                                    />
-                                )
-                            })
-                        ):null}
-                    </div>
-                </div>
-            ):null}
+                ):null
+            )}
+            
         </>
         
     )
 }
+
+
 
 export default ExpiredItemsPanel;
 

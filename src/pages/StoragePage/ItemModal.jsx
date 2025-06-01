@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import styles from "./StoragePage.module.scss";
 import { Close } from "@mui/icons-material";
-import { getStorageItemById, auth, updateStorageItem, createStorageItem, getStorageDocId } from "../../config/firebase";
+import { getItemById, auth, updateItemById, createStorageItem } from "../../config/firebase";
 import { getFormatedDate } from "../../fn";
 
 const ItemModal =({
+    storageId,
     isToCreate,
     setIsModalOpen,
     modalItemId,
-    storageName,
     onItemUpdated,
     onItemCreated,
     isModalOpen,
@@ -81,16 +81,21 @@ const ItemModal =({
 
     const handleCreateItem = async () => {
         setNotifyContent({ type: "", text: "新增項目中" })
-        const storageDocId = await getStorageDocId(user, storageName)
         setBtnDisabled(true)
         const jsCreateDate = new Date();
         const jsExpiredDate = new Date(itemData.expired_date);
-        const newItem = { ...itemData, expired_date: jsExpiredDate, created_at: jsCreateDate };
-        const result = await createStorageItem(user, newItem, storageDocId);
+        const newItem = { 
+            ...itemData, 
+            expired_date: jsExpiredDate, 
+            created_at: jsCreateDate ,
+            storageId : storageId,
+        };
+        const {status , itemId} = await createStorageItem(user, newItem);
 
-        if (result.state === "success" && result.itemDocId) {
+        if (status === "success" && itemId) {
             setNotifyContent({ type: "", text: "項目新增成功" });
-            onItemCreated();
+            //重新渲染畫面
+            onItemCreated(newItem, itemId);
             setTimeout(() => {
                 setNotifyContent({ type: "", text: "" });
                 setIsModalOpen(false);
@@ -108,13 +113,12 @@ const ItemModal =({
             expired_date: new Date(itemData.expired_date),
             created_at: new Date(itemData.created_at),
         };
-        const updateState = await updateStorageItem(user, storageName, modalItemId, newItemData);
+        const updateState = await updateItemById(user, modalItemId, newItemData);
 
         if (updateState === "success") {
             setNotifyContent({ type: "", text: "項目更新成功" });
             if (onItemUpdated) {
-                onItemUpdated(modalItemId);
-                console.log('回傳 item Id ',modalItemId)
+                onItemUpdated(modalItemId, newItemData);
             }
             setTimeout(() => {
                 setNotifyContent({ type: "", text: "" });
@@ -126,16 +130,21 @@ const ItemModal =({
     };
 
     const fetchStorageItemById = async () => {
-        const dataObj = await getStorageItemById(user, storageName, modalItemId);
-        if (dataObj) {
+        const response = await getItemById(user, modalItemId);
+        if (response.status === "success") {
+            const data = response.data;
             const formatedData = {
-                ...dataObj,
-                expired_date: getFormatedDate(dataObj.expired_date),
-                created_at: getFormatedDate(dataObj.created_at),
+                ...data,
+                expired_date: getFormatedDate(data.expired_date),
+                created_at: getFormatedDate(data.created_at),
             };
             setItemData(formatedData);
         } else {
-            console.log('對應 id 資料不存在！');
+            if(response.error){
+                console.log(`讀取 id ${modalItemId}失敗`,response.error);   
+            }else{
+                console.log(`點擊 id 不存在`)
+            }
         }
     };
 
@@ -300,7 +309,6 @@ const ItemModal =({
                             )
                         }
                     </div>
-                
                     {notifyContent.text.length > 0  ?(
                         <>
                             <div className={styles.notifyPopout}>

@@ -1,4 +1,4 @@
-
+import { Timestamp} from "firebase/firestore";
 //由 inuput 是否判斷為有效，切換按鈕可點擊性
 export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
     //設一個起始值
@@ -18,8 +18,7 @@ export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
 //時間(Timestamp)換算: 
 export const getFormatedDate =(timeStampObj)=>{
     if(!timeStampObj  || (!timeStampObj._seconds && !timeStampObj.seconds) ){
-        console.log('輸入時間格式不完整', timeStampObj)
-        //中斷
+        console.log('輸入timeStamp時間格式不完整或錯誤', timeStampObj)
         return
     }
 
@@ -47,8 +46,27 @@ export const formateDateFromJS = (jsDate)=>{
     return `${year}-${month}-${day}`
 }
 
+//由 duration 推算出日期，並使用 timeStamp 轉換供 firebase 比較用
+export const getDurationTimeStamp = (duration)=>{
+    if(duration === "today" || duration === "week" || duration === "month"){
+        console.log('時間範圍為：' ,duration)
+        const today = new Date();
+        let durationTimeStamp;
+        switch (duration) {
+            case  "month":
+                durationTimeStamp = Timestamp.fromDate(today.setDate(today.getDate() - 30))
+                break;
 
+            case  "week":
+                durationTimeStamp = Timestamp.fromDate(today.setDate(today.getDate() - 7))
+                break;
 
-
-
-
+            default:
+                durationTimeStamp = Timestamp.fromDate(today)
+                break;
+        }
+        return durationTimeStamp
+    }else{
+        console.log('輸入非預期時間範圍 或 非有效值', duration)
+    }
+}

@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import styles from "./Navbar.module.scss";
 import {Menu, Home, Storage, Search, Logout} from "@mui/icons-material"
 import { useAuth } from "../contexts/AuthContext";
-import {auth, getAllStorageTitles} from "../config/firebase"
+import {auth, getAllStorages} from "../config/firebase"
 import { signOut } from "firebase/auth";
 import clsx from "clsx";
 import { useNavigatePage } from "../contexts/NavigatePageContext";
+import Swal from "sweetalert2";
 const NavbarItem = ({
     itemTitle,
     itemIcon,
@@ -13,22 +14,28 @@ const NavbarItem = ({
     handelToSubnavItem,
     isDropDownOpen,
 })=>{
-    const user = auth.currentUser
-    const [subItem, setSubItem] = useState();
+    const [subItem, setSubItem] = useState([]);
     
     const fetchStorageNames = async () => {
-        if(itemTitle === "儲位區"){
-            const user = auth.currentUser;
-            const storageNames = await getAllStorageTitles(user);
-            setSubItem(storageNames)
+        console.log('fetchStorageNames triggered')
+        const user = auth.currentUser;
+        const response  = await getAllStorages(user);
+        if(response.status === "failed"){
+            Swal.fire({
+                title:"儲位讀取失敗",
+                icon: "error"
+            })
         }else{
-            setSubItem(null)
+            setSubItem(response.data)
         }
     }
 
+
     useEffect(()=>{
-        fetchStorageNames()
-    },[user])
+        if(itemTitle === "儲位區"){
+            fetchStorageNames()
+        }
+    },[itemTitle])
 
     return(
         <div className={styles.navItemContainer}> 
@@ -42,14 +49,13 @@ const NavbarItem = ({
                 <span className={styles.itemTitle}>{itemTitle}</span>
             </div>
             <div className={styles.navSubItem}>
-
                 {isDropDownOpen && subItem && subItem.length ? (
                         subItem.map((item)=>{
                             return(
                                 <div 
-                                    id={item.storageDocId}
+                                    id={item.id}
                                     className={styles.subItem}
-                                    key={item.storageDocId}
+                                    key={item.id}
                                     onClick={handelToSubnavItem}
                                 >
                                     {item.storageTitle}
@@ -70,8 +76,9 @@ const LogoutItem =()=>{
     const {setIsUserSettingExist} = useAuth()
     const handleLogout = async()=>{
         try{
-            console.log(`使用者${auth?.currentUser.displayName}登出`)
             setIsUserSettingExist(false)
+            localStorage.removeItem('storageId')
+            localStorage.removeItem('hasDefaultInitialize')
             await signOut(auth);
         }catch(err){
             console.log("fialed to logout")
@@ -93,7 +100,8 @@ const LogoutItem =()=>{
 }
 
 const Navbar =()=>{
-    const { handleToHomePage, hadndleToSearchPage, handelToStoragePage} = useNavigatePage();
+    //const user = auth.currentUser;
+    const { handleToHomePage, handelToStoragePage} = useNavigatePage();
     const [isNavbarOpen, setIsNavbarOpen]= useState(false)
     const [isDropDownOpen, setIsDropDownOpen] = useState(false);
     const handleDropDownSwitch= ()=>{
@@ -118,7 +126,6 @@ const Navbar =()=>{
         id:'navItem03',
         title: "搜尋 菜價/食譜",
         icon: <Search/>,
-        //handleClickNavItem: hadndleToSearchPage,
     },]
 
     

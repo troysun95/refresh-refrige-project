@@ -7,6 +7,33 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    .initialModal{
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        .modalPanel{
+            position: absolute;
+            top: 35%;
+            left: 25%;
+            width: 50%;
+            height: 30%;
+            padding: 2rem;
+            border-radius: 25px;
+            background-color: var(--modal-bgc-color);
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            span{
+                font-size: 25px;
+                font-weight: 600;
+                margin: 10px  0;
+            }
+        }
+        .modalMask{
+            @include base.mask-setting;
+        }
+    }
+
     .mainPanel{
         padding: 20px 15px;
         display: flex;
@@ -104,15 +131,10 @@
                             }
                         }
                     }
-                    
-                    
-                    
-                    
-                    
                 }
             }
             .storageCardWrapper{
-                @include base.grid-setting-autofill(minmax(400px, 1fr), 650px, center, center);
+                @include base.grid-setting-autofill(minmax(400px, 1fr), 750px, center, center);
                 grid-gap:20px;
                 margin:  0 10px;
                 align-items: start;
@@ -128,44 +150,85 @@
                             text-align: center;
                             cursor: pointer;
                             border-radius: 30px 30px 0 0 ;
-                            
                             &:hover{
                                 background-color: var(--hover-color);
                             }
                         }
 
                     }
-                    .previewItemsPanel {
-                        width: 100%;
-                        height: 230px;
-                        overflow: auto;
-                        color:var(--text-color);
-                        border: 1px solid red;
-                        @include base.set-table-column-widths((
-                            1:20%,
-                            2:15%,
-                            3:15%,
-                            4:25%,
-                            5:25%,
-                        ));
-                        
-                        .previewItems, .itemTitleWrapper{
-                            @include base.title-three-dots;
-                        }
-                        .itemTitle, .previewItem {
-                            border: 1px solid var(--hover-color);
-                            padding: 8px;
-                        }
-                        .itemTitle{
-                            background-color: var(--thead-color);
-                        }
-                        .previewItem{
+                    .itemCardsPanel{
+                        height: 500px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        font-family: var(--main-text-font-family);
+                        .itemCard{
+                            width: 90%;
+                            height: 18%;
+                            display: flex;
+                            flex-direction: row;
+                            border-radius: 10px;
+                            padding: 10px;
                             background-color: var(--background-color);
-                        }
-                        .noStorageItems{
-                            font-size: 30px;
-                            text-align: center;
-                            padding-top: 50px;
+                            box-shadow: 1px 1px 5px rgba($color: #000000, $alpha: .3);
+                            position: relative;
+                            .cardInfo{
+                                width: 90%;
+                                .cardTitle{
+                                    width: 100%;
+                                    .itemName{
+                                        font-size: var(--title-fw);
+                                        font-size: var(--subTitle-fz);
+                                        @include base.title-three-dots;
+                                    }
+                                }
+                                .cardSubTitle{
+                                    display: flex;
+                                    flex-direction: row;
+
+                                    margin-left: 30px;
+                                    div{
+                                        max-width: 45%;
+                                        border-radius: 2px;
+                                        margin-right: 5%;
+                                        margin-top: 10px;
+                                        span{
+                                            font-size: 20px;
+                                            @include base.title-three-dots;
+                                        }
+                                    }
+                                }
+                                .cardDateContainer{
+                                    width: 100%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: space-between  ;
+                                    margin-top: 20px;
+                                    span{
+                                        width: 100%;
+                                    }
+                                    .expiredDate{
+                                        font-size: 18px;
+                                        font-weight: 600;
+                                    }
+                                }
+
+                                
+
+                            }
+                            .itemLabel{
+                                position: absolute;
+                                background-color: var(--hover-color);
+                            }
+                            .iconPanel{
+                               width: 10%;
+                               margin: 20px;
+                               border: 1px solid #000;
+                               display: flex;
+                               flex-direction: row;
+                               align-items: center;
+                               justify-content: center;
+                            }
                         }
                     }
                     .fastCreatePanel{
@@ -236,12 +299,12 @@
                         top:0;
                         width: 100%;
                         height: 100%;
-                        background-color: var(--background-color);
                         z-index: 4;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
                         border-radius: inherit;
+                        backdrop-filter: blur(20px); 
                         h3{
                             margin: 20px;
                             font-size: var(--title-fz);
@@ -250,13 +313,26 @@
                             @include base.input-setting;
                         }
                         .btnPanel{
+                            width: 100%;
                             display: flex;
                             flex-direction: row;
+                            justify-content: center;
+                            align-items: center;
                             button{
-                                width: 150px;
+                                width: 40%;
                                 height: 50px;
+                                margin-right: 10px;
                                 border-radius: 25px;
-                                margin:  50px ;
+                                font-size: 20px;
+                            }
+                            .cancelBtn{
+                                background-color: var(--cancel-btn-color);
+                            }
+                            .deleteBtn{
+                                background-color: var(--delete-btn-color);
+                            }
+                            .modifyBtn{
+                                background-color: var(--secondary-color)
                             }
                         }
                     }
@@ -266,26 +342,62 @@
             }
         }
     }
-    .createStoragePanel{
-        padding: 0 15px;
+    .toCreateStoragePanel{
+        height: 300px;
+        border: 5px dashed var(--hover-color);
+        border-radius: 30px;
         display: flex;
         flex-direction: column;
-        border-radius: 5px 5px 0 0 ;
-        box-shadow: 0px -1px 2px rgba($color: #000000, $alpha: 0.3);
         h3{
             width: 100%;
+            text-align: center;
+            font-size: 25px;
+            margin: 25px  0 5px 0 ;
         }
-        input{
-        @include base.input-setting;
-        }
-        button{
-            @include base.button-setting;
-            width: 100px;
-            height: 60px;
-            border-radius: 30px;
+        .addBtnContainer{
+            width: 100%;
+            height: 80%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
     }
-    .testArea{
-        @include base.loading-circle;
+    .createStorageModal{
+        @extend .toCreateStoragePanel;
+        position: relative;
+        input {
+            @include base.input-setting;
+            width: 90%;
+        }
+        .errorMsgPanel{
+            height: 20%;
+            margin: 10px;
+            font-size: 25px;
+        }
+        .createBtnPanel{
+            position: absolute;
+            top: 80%;
+            width: 100%;
+            height: 20%;
+            align-items: center;
+            button{
+                @include base.button-setting;
+                width:45%;
+                height: 70%;
+                margin: 5px 5px;
+                border-radius: 25px;                
+            }
+            .cancelBtn{
+                background-color: var(--cancel-btn-color);
+            }
+            .createBtnNotAllowed{
+                @include base.button-notAllowed;
+            }
+            .confirmBtn{
+                background-color: var(--secondary-color);
+                cursor: pointer;
+            }
+        }
     }
 }
