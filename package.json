@@ -21,11 +21,14 @@
     "uuid": "^11.0.3",
     "web-vitals": "^2.1.4"
   },
+  "homepage": "https://troysun95.github.io/refresh-refrige-project",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -47,6 +50,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "gh-pages": "^6.3.0",
     "jest": "^29.7.0"
   }
 }
