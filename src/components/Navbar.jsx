@@ -2,48 +2,63 @@ import { useEffect, useState } from "react";
 import styles from "./Navbar.module.scss";
 import {Menu, Home, Storage, Search, Logout} from "@mui/icons-material"
 import { useAuth } from "../contexts/AuthContext";
-import {auth, getAllStorageTitles} from "../config/firebase"
+import {auth, getAllStorages} from "../config/firebase"
 import { signOut } from "firebase/auth";
 import clsx from "clsx";
-//import { useNavigate } from "react-router-dom";
-
+import { useNavigatePage } from "../contexts/NavigatePageContext";
+import Swal from "sweetalert2";
 const NavbarItem = ({
     itemTitle,
-    itemIcon
+    itemIcon,
+    handleClickNavItem,
+    handelToSubnavItem,
+    isDropDownOpen,
 })=>{
-    const user = auth.currentUser
-    const [subItem, setSubItem] = useState();
+    const [subItem, setSubItem] = useState([]);
     
     const fetchStorageNames = async () => {
-        if(itemTitle === "儲位區"){
-            const user = auth.currentUser;
-            const storageNames = await getAllStorageTitles(user);
-            setSubItem(storageNames)
+        console.log('fetchStorageNames triggered')
+        const user = auth.currentUser;
+        const response  = await getAllStorages(user);
+        if(response.status === "failed"){
+            Swal.fire({
+                title:"儲位讀取失敗",
+                icon: "error"
+            })
         }else{
-            setSubItem(null)
+            setSubItem(response.data)
         }
     }
+
+
     useEffect(()=>{
-        fetchStorageNames()
-    },[user])
+        if(itemTitle === "儲位區"){
+            fetchStorageNames()
+        }
+    },[itemTitle])
 
     return(
         <div className={styles.navItemContainer}> 
-            <div className={styles.navItem}>
+            <div 
+                className={styles.navItem}
+                onClick={handleClickNavItem}
+            >
                 <div className={styles.itemIcon}>
                     {itemIcon}
                 </div>
                 <span className={styles.itemTitle}>{itemTitle}</span>
             </div>
             <div className={styles.navSubItem}>
-                {subItem && subItem.length ? (
+                {isDropDownOpen && subItem && subItem.length ? (
                         subItem.map((item)=>{
                             return(
                                 <div 
+                                    id={item.id}
                                     className={styles.subItem}
-                                    key={item.storageDocId}
+                                    key={item.id}
+                                    onClick={handelToSubnavItem}
                                 >
-                                    <span>{item.storageTitle}</span>
+                                    {item.storageTitle}
                                 </div>
                                     
                             )
@@ -61,8 +76,9 @@ const LogoutItem =()=>{
     const {setIsUserSettingExist} = useAuth()
     const handleLogout = async()=>{
         try{
-            console.log(`使用者${auth?.currentUser.displayName}登出`)
             setIsUserSettingExist(false)
+            localStorage.removeItem('storageId')
+            localStorage.removeItem('hasDefaultInitialize')
             await signOut(auth);
         }catch(err){
             console.log("fialed to logout")
@@ -84,21 +100,35 @@ const LogoutItem =()=>{
 }
 
 const Navbar =()=>{
+    //const user = auth.currentUser;
+    const { handleToHomePage, handelToStoragePage} = useNavigatePage();
     const [isNavbarOpen, setIsNavbarOpen]= useState(false)
+    const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+    const handleDropDownSwitch= ()=>{
+        setIsDropDownOpen(!isDropDownOpen)
+    }
+    const handleToStorageClicked = (e)=>{
+        handelToStoragePage(e) 
+        setIsNavbarOpen(false)
+    }
     const navbarItems = [{
         id:'navItem01',
         title: "首頁",
         icon: <Home/>,
+        handleClickNavItem: handleToHomePage,
     },{
         id:'navItem02',
         title: "儲位區",
         icon: <Storage/>,
+        handleClickNavItem: handleDropDownSwitch,
+        handelToSubnavItem: handleToStorageClicked
     },{
         id:'navItem03',
         title: "搜尋 菜價/食譜",
         icon: <Search/>,
     },]
 
+    
 
     const handelNavbarOpen=()=>{
         if(isNavbarOpen){
@@ -109,9 +139,11 @@ const Navbar =()=>{
     }
 
 
+
+
     return(
         <>
-             <div className={clsx(styles.navbarWrapperClosed, {[styles.navbarWrapperOpen]: isNavbarOpen})}>
+            <div className={clsx(styles.navbarWrapperClosed, {[styles.navbarWrapperOpen]: isNavbarOpen})}>
                 <div className={styles.navbarContainer}>
                     {isNavbarOpen ? (
                         <>
@@ -128,6 +160,9 @@ const Navbar =()=>{
                                         key={item.id}
                                         itemTitle={item.title}
                                         itemIcon={item.icon}
+                                        handleClickNavItem={item.handleClickNavItem}
+                                        handelToSubnavItem={item.handelToSubnavItem}
+                                        isDropDownOpen={isDropDownOpen}
                                     />
                                 )
                             })}
@@ -149,7 +184,11 @@ const Navbar =()=>{
             </div>
             {/* navbar Mask */}
             {isNavbarOpen ? (
-                <div className={styles.navbarmask}>
+                <div className={styles.navbarmask}
+                    onClick={()=>{
+                        setIsNavbarOpen(false)
+                    }}
+                >
                 </div>): null
             }
             

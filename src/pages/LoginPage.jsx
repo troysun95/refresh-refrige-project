@@ -97,23 +97,31 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
     };
 
 
-    const checkUserSettingExist = async(user) => {
-        //console.log("檢查 userSetting 文件 ?存在")
+    const checkIsUserSetttingExist = async(user) => {
+
         if(!user){
             throw new Error("使用者登入尚未成功")
         }
         const docRef = doc(db, "users",user.uid, "userSetting", "userSetting")
         const docSnap = await getDoc(docRef);
         try{
-            if(docSnap.exists()){
-                setIsUserSettingExist(true)
-            }else{
+            if(!docSnap.exists()){
                 setIsUserSettingExist(false)
-                await setupUserSetting(user, user.email, user.displayName)
-                setIsUserSettingExist(true)
+                const response = await setupUserSetting(user, user.email, user.displayName)
+                if(response === "success" ){
+                    return {status: true}
+                }else{
+                    return {
+                        status: false,
+                        errorMsg: "使用者初始化設置失敗"
+                    }
+                }
+            }else{
+                return {status: true}
             }
+
         }catch(error){
-            console.error("fialed to check collection exist",error)
+            console.error("檢查 userSetting 失敗",error)
         }
     }   
 
@@ -124,7 +132,16 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                 loginInput.email,
                 loginInput.password
             );
-            await checkUserSettingExist(result.user);
+            const response = await checkIsUserSetttingExist(result.user);
+            if(response.status){
+                setIsUserSettingExist(true)
+            }else{
+                Swal.fire({
+                    title: "登入失敗",
+                    text: response.errorMsg,
+                    icon: "error"
+                })
+            }
         } catch (error) {
             console.error("Failed to login with email and password:", error);
             let errorMessage = "輸入email 或 密碼錯誤"
@@ -151,16 +168,20 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
     };
     
 
-    const handleLoginWithGoogle = ()=>{
-        setIsModalOpen(true)
-    }
-
-    
     const fetchLogininWithGoogle = async()=>{
         setIsModalOpen(false)
         try{
             const result = await signInWithPopup(auth, provide);
-            await checkUserSettingExist(result.user);
+            const response = await checkIsUserSetttingExist(result.user);
+            if(response.status){
+                setIsUserSettingExist(true)
+            }else{
+                Swal.fire({
+                    title: "登入失敗",
+                    text: response.errorMsg,
+                    icon: "error"
+                })
+            }
         }catch(error){
             console.error('登入錯誤', error.code)
             let errorMessage = '登入失敗，請稍後再試';
@@ -231,8 +252,14 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
             <div className={styles.loginBtnPanel}>
                 <div className={styles.fastLogin}>
                     <div> 或 </div>
-                    <button className={styles.googleFastLogin}onClick={handleLoginWithGoogle}>Google 快速登入</button>
-                    {/* 快速登入警告視窗 */}
+                    <button 
+                        className={styles.googleFastLogin}
+                        onClick={()=>{
+                            setIsModalOpen(true)
+                        }}
+                    >
+                        Google 快速登入
+                    </button>
                     {isModalOpened ? 
                         <LoginWarningModal 
                         setHasUserConfirmed={setHasUserConfirmed}

@@ -1,0 +1,85 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "ASCENDING"},
+        {"fieldPath": "created_at", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "ASCENDING"},
+        {"fieldPath": "expired_date", "order": "ASCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "ASCENDING"},
+        {"fieldPath": "name", "order": "ASCENDING"},
+        {"fieldPath": "created_at", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "ASCENDING"},
+        {"fieldPath": "name", "order": "ASCENDING"},
+        {"fieldPath": "expired_date", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },{
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "ASCENDING"},
+        {"fieldPath": "notes", "order": "ASCENDING"},
+        {"fieldPath": "created_at", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "ASCENDING"},
+        {"fieldPath": "notes", "order": "ASCENDING"},
+        {"fieldPath": "expired_date", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },{
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "name", "order": "ASCENDING"},
+        {"fieldPath": "storageId", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    },{
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "expired_date", "order": "DESCENDING"},
+        {"fieldPath": "storageId", "order": "DESCENDING"}
+      ]
+    },{
+      "collectionGroup": "items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "storageId", "order": "DESCENDING"},
+        {"fieldPath": "expired_date", "order": "DESCENDING"},
+        {"fieldPath": "expired_date", "order": "DESCENDING"},
+        {"fieldPath": "__name__", "order": "DESCENDING"}
+      ]
+    }
+  ]
+}

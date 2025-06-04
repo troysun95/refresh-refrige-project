@@ -1,5 +1,4 @@
-//通用函式
-
+import { Timestamp} from "firebase/firestore";
 //由 inuput 是否判斷為有效，切換按鈕可點擊性
 export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
     //設一個起始值
@@ -16,24 +15,58 @@ export const updateBtnDisabled = (fieldState, setBtnState, isLoading)=>{
     setBtnState(btnDisabled)
 }
 
-//時間(Timestamp)換算
+//時間(Timestamp)換算: 
 export const getFormatedDate =(timeStampObj)=>{
-    if(!timeStampObj  || !timeStampObj.seconds ){
-        console.log('輸入時間格式不完整', timeStampObj)
-        //中斷
+    if(!timeStampObj  || (!timeStampObj._seconds && !timeStampObj.seconds) ){
+        console.log('輸入timeStamp時間格式不完整或錯誤', timeStampObj)
         return
     }
-    const nanoSecs = timeStampObj.nanoseconds;
-    const secs = timeStampObj.seconds;
+
+    let nanoSecs = 0;
+    let secs = 0;
+    if(timeStampObj._seconds){
+        nanoSecs = timeStampObj._nanoseconds
+        secs = timeStampObj._seconds;
+    }else{
+        nanoSecs = timeStampObj.nanoseconds
+        secs = timeStampObj.seconds;
+    }
     const date = new Date((nanoSecs / 1e6) + secs * 1000)
-    return date.toLocaleDateString("zh-TW",{
-        year:"numeric",
-        month:"2-digit",
-        day:"2-digit",
-    })
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
 }
 
+//時間(js date)轉換
+export const formateDateFromJS = (jsDate)=>{
+    const year = jsDate.getFullYear();
+    const month = String(jsDate.getMonth() + 1).padStart(2, '0');
+    const day = String(jsDate.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
 
+//由 duration 推算出日期，並使用 timeStamp 轉換供 firebase 比較用
+export const getDurationTimeStamp = (duration)=>{
+    if(duration === "today" || duration === "week" || duration === "month"){
+        console.log('時間範圍為：' ,duration)
+        const today = new Date();
+        let durationTimeStamp;
+        switch (duration) {
+            case  "month":
+                durationTimeStamp = Timestamp.fromDate(today.setDate(today.getDate() - 30))
+                break;
 
+            case  "week":
+                durationTimeStamp = Timestamp.fromDate(today.setDate(today.getDate() - 7))
+                break;
 
-
+            default:
+                durationTimeStamp = Timestamp.fromDate(today)
+                break;
+        }
+        return durationTimeStamp
+    }else{
+        console.log('輸入非預期時間範圍 或 非有效值', duration)
+    }
+}
