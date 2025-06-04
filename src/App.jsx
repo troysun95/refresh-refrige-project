@@ -39,7 +39,9 @@ function App() {
   
   return (
     <>
-      <BrowserRouter>
+      {/* <BrowserRouter> */}
+      {/* 更新路由名稱 */}
+      <BrowserRouter basename="/refresh-refrige-project">
         <NavigatePageProvider>
         <div className={styles.appContainer}>
             <Routes>

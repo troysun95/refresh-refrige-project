@@ -59,13 +59,6 @@ const checkIsUserValid = (user)=>{
 }
 
 
-// const checkIsDatabaseExist = async(checkDocRef, databaseName)=>{
-//   const docSnap = await getDoc(checkDocRef)
-//   if(docSnap.exists()){
-//     throw new Error(`資料庫 ${databaseName}已經存在，勿新增以免覆蓋`)
-//   }
-// }
-
 const checkIsDocExist =async(docRef)=>{
   const docSnap = await getDoc(docRef)
   let isExist = true;
@@ -75,54 +68,6 @@ const checkIsDocExist =async(docRef)=>{
   return isExist
 }
 
-//後端資料
-//TODO 
-// export const fetchFilterData = async (
-//   user, 
-//   storageId, 
-//   limitNumber = 0,
-//   sortBy, 
-//   descending,
-//   sortAfter = null,
-// ) => {
-//   try {
-//     const userId = user.uid;
-//     const collectionPath = `users/${userId}/storageCollection/${storageId}/items`; 
-
-//     let formattedSortAfter = null;
-//     if (sortAfter) {
-//       if (sortAfter instanceof Object && sortAfter.seconds !== undefined) {
-//         formattedSortAfter = JSON.stringify({
-//           _seconds: sortAfter.seconds,
-//           _nanoseconds: sortAfter.nanoseconds
-//         });
-//       } else {
-//         formattedSortAfter = JSON.stringify(sortAfter);
-//       }
-//       console.log("透過 sortAfter 呼叫", formattedSortAfter);
-//     }
-
-//     const params = {
-//       collectionPath: collectionPath,
-//       limitNumber: limitNumber,
-//       sortBy: sortBy,
-//       descending: descending ? "desc" : "asc",
-//       sortAfter: formattedSortAfter, 
-//     };
-
-//     const response = await axiosInstance.get("/getFilteredData", { params });
-
-//     console.log("fetchFilterData 成功！", response.data);
-//     return {
-//       data: response.data.data,
-//       hasMore: response.data.hasMore,
-//       sortAfter: response.data.sortAfter, 
-//     };
-//   } catch (error) {
-//     console.error("failed to fetch filter data", error);
-//     return null;
-//   }
-// };
 
 
 
