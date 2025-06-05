@@ -58,7 +58,9 @@ function App() {
               }/>
 
               {/* 公路由 */}
-              <Route path="/login" element ={
+              {/* <Route path="/login" element ={ */}
+              {/* 導向登入頁面 */}
+              <Route path="/" element={
                 <PublicRoute>
                   <LoginPage
                     isDarkMode={isDarkMode} 
