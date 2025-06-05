@@ -98,7 +98,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
 
 
     const checkUserSettingExist = async(user) => {
-        //console.log("檢查 userSetting 文件 ?存在")
+
         if(!user){
             throw new Error("使用者登入尚未成功")
         }
@@ -227,13 +227,14 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                     className={styles.loginBtn}
                 >登入
                 </button>
+                <span>test for deploy</span>
             </div>
             <hr style={{margin:"10px 5px"}}/>
             <div className={styles.loginBtnPanel}>
                 <div className={styles.fastLogin}>
                     <div> 或 </div>
                     <button className={styles.googleFastLogin}onClick={handleLoginWithGoogle}>Google 快速登入</button>
-                    {/* 快速登入警告視窗 */}
+
                     {isModalOpened ? 
                         <LoginWarningModal 
                         setHasUserConfirmed={setHasUserConfirmed}
