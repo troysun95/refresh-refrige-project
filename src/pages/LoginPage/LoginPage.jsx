@@ -227,6 +227,8 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
                     className={styles.loginBtn}
                 >登入
                 </button>
+
+                 
                 {/* <span>test for deploy</span> */}
             </div>
             <hr style={{margin:"10px 5px"}}/>
