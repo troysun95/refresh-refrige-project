@@ -2,13 +2,14 @@ import {  useEffect, useState } from "react";
 import styles from './HomePage.module.scss'
 import {ArrowDropDown, ArrowLeft, ErrorRounded,} from "@mui/icons-material"
 import { getFormatedDate } from "../../fn";
+import { useCallback } from "react";
 
 const ExpiredItemsSection= ({items, onButtonClicked})=>{
     
     const [formatedItems, setFomatedItems] =useState([])
     const [isDropDownOpen, setIsDropDownOpen] = useState(false)
 
-    const getFormatedItmes =  async() => {
+    const getFormatedItems =  useCallback(async() => {
         try {
             const newItems = items.items.map((item)=>{
                 const itemFormated = {
@@ -22,7 +23,7 @@ const ExpiredItemsSection= ({items, onButtonClicked})=>{
         } catch (error) {
             console.error("Fialed to foremate items",error)
         }
-    }
+    },[items])
 
     const handleClick = (e)=>{
         const name = e.target.name;
@@ -37,9 +38,9 @@ const ExpiredItemsSection= ({items, onButtonClicked})=>{
 
     useEffect(()=>{
         if(items){
-            getFormatedItmes();
+            getFormatedItems();
         }
-    },[items.length])
+    },[items, getFormatedItems])
 
     return(
         <>

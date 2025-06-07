@@ -9,6 +9,7 @@ import { getDoc, doc} from "firebase/firestore";
 import {  useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {Kitchen, Close} from "@mui/icons-material";
+import { useCallback } from "react";
 
 const LoginWarningModal = ({setHasUserConfirmed, setIsModalOpen})=>{
 
@@ -97,33 +98,33 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
     };
 
 
-    const checkIsUserSetttingExist = async(user) => {
-
-        if(!user){
-            throw new Error("使用者登入尚未成功")
+    //改用 useCallback 
+    const checkIsUserSetttingExist = useCallback(async (user) => {
+        if (!user) {
+            throw new Error("使用者登入尚未成功");
         }
-        const docRef = doc(db, "users",user.uid, "userSetting", "userSetting")
+        const docRef = doc(db, "users", user.uid, "userSetting", "userSetting");
         const docSnap = await getDoc(docRef);
-        try{
-            if(!docSnap.exists()){
-                setIsUserSettingExist(false)
-                const response = await setupUserSetting(user, user.email, user.displayName)
-                if(response === "success" ){
-                    return {status: true}
-                }else{
+        try {
+            if (!docSnap.exists()) {
+                setIsUserSettingExist(false); // setIsUserSettingExist 引用穩定
+                const response = await setupUserSetting(user, user.email, user.displayName); // setupUserSetting 外部導入，引用穩定
+                if (response === "success") {
+                    return { status: true };
+                } else {
                     return {
                         status: false,
                         errorMsg: "使用者初始化設置失敗"
-                    }
+                    };
                 }
-            }else{
-                return {status: true}
+            } else {
+                return { status: true };
             }
-
-        }catch(error){
-            console.error("檢查 userSetting 失敗",error)
+        } catch (error) {
+            console.error("檢查 userSetting 失敗", error);
+            return { status: false, errorMsg: "檢查使用者設定失敗" };
         }
-    }   
+    }, [setIsUserSettingExist])
 
     const handleLoginWithEmailAndPassword = async () => {
         try {
@@ -168,39 +169,43 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
     };
     
 
-    const fetchLogininWithGoogle = async()=>{
-        setIsModalOpen(false)
-        try{
-            const result = await signInWithPopup(auth, provide);
+
+
+    //改用 useCallback
+    const fetchLogininWithGoogle = useCallback(async () => {
+        setIsModalOpen(false); // setIsModalOpen 是 setState 函數，引用穩定
+        try {
+            const result = await signInWithPopup(auth, provide); // auth 和 provide 外部導入，引用穩定
+            // 調用 checkIsUserSetttingExist (現在是 useCallback 包裹的，引用穩定)
             const response = await checkIsUserSetttingExist(result.user);
-            if(response.status){
-                setIsUserSettingExist(true)
-            }else{
-                Swal.fire({
+            if (response.status) {
+                setIsUserSettingExist(true); 
+            } else {
+                Swal.fire({ 
                     title: "登入失敗",
                     text: response.errorMsg,
                     icon: "error"
-                })
+                });
             }
-        }catch(error){
-            console.error('登入錯誤', error.code)
+        } catch (error) {
+            console.error('登入錯誤', error.code);
             let errorMessage = '登入失敗，請稍後再試';
-            if(error.code === "auth/cancelled-popup-request"){
-                errorMessage = "請求過多受阻，請稍後再嘗試"
-            }else if (error.code === "auth/popup-blocked"){
-                errorMessage = "彈出視窗被阻擋，請先允許彈出視窗，並稍後再嘗試"
-            }else if (error.code === "auth/popup-closed-by-user"){
-                errorMessage = "彈出視窗被關閉，請稍後再嘗試"
-            }else{
-                errorMessage = `未知錯誤:${error.message}`
+            if (error.code === "auth/cancelled-popup-request") {
+                errorMessage = "請求過多受阻，請稍後再嘗試";
+            } else if (error.code === "auth/popup-blocked") {
+                errorMessage = "彈出視窗被阻擋，請先允許彈出視窗，並稍後再嘗試";
+            } else if (error.code === "auth/popup-closed-by-user") {
+                errorMessage = "彈出視窗被關閉，請稍後再嘗試";
+            } else {
+                errorMessage = `未知錯誤:${error.message}`;
             }
             Swal.fire({
-                title:"使用者登入失敗",
+                title: "使用者登入失敗",
                 text: errorMessage,
-                icon:"error"
-            })            
+                icon: "error"
+            });
         }
-    }
+    }, [checkIsUserSetttingExist, setIsUserSettingExist]);
 
    
 
@@ -211,7 +216,7 @@ const LoginPage =({setIsDarkMode, isDarkMode})=>{
             fetchLogininWithGoogle()
         }
         
-    },[isValid, hasUserConfirmed, loginDisabled, navigate])
+    },[isValid, hasUserConfirmed, loginDisabled, fetchLogininWithGoogle,])
 
 
     return (

@@ -4,7 +4,7 @@ import {
     setPersistence,
     onAuthStateChanged,
 } from "firebase/auth";
-import { provide, auth } from "../config/firebase";
+import { auth } from "../config/firebase";
 
 const AuthContext = createContext();
 
@@ -26,12 +26,12 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
     }, []);
 
-    //監聽若沒有登出，維持登入狀態
+    //使用者若沒有登出，維持登入結果
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 setIsAuthenticated(true);
-                //新增延續 isUserSetting 驗證 , 或使用 ref 紀錄就好
+
                 setIsUserSettingExist(true);
                 if(!isPersistSet){
                     setPersistence(auth, browserLocalPersistence);
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
             }
         });
 
-        return unsubscribe; // 清理監聽器
+        return unsubscribe; 
     }, []);
 
 
