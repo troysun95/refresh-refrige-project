@@ -3,9 +3,8 @@ import styles from './StoragePage.module.scss';
 import BrandHeader from '../../components/BrandHeader';
 import Navbar from '../../components/Navbar';
 import ItemModal from './ItemModal';
-import {  useEffect, useRef, useState } from 'react';
+import {  useEffect, useState , useCallback} from 'react';
 import { deleteItemById, getStorageSortedItems, fetchStorageSearchData, 
-    //getStorageItemById, removeItemDocId,  
 } from '../../config/firebase';
 import {auth} from '../../config/firebase'
 import {  formateDateFromJS, getFormatedDate } from '../../fn';
@@ -34,7 +33,8 @@ const StoragePage = ()=>{
     ]
 
     //排序 :
-    const [limitNumber, setLimitNumber] = useState(2);
+    //const [limitNumber, setLimitNumber] = useState(2)
+    const limitNumber = 2;
     const [arrangeClicked, setArrangeClicked ] = useState(filterOptions[0])
     //搜尋
     const [searchShow, setSearchShow] = useState(false)
@@ -477,7 +477,7 @@ const StoragePage = ()=>{
 
 
     //fetchItemsByDefault：首次頁面渲染用
-    const fetchItemsByDefault = async()=>{
+    const fetchItemsByDefault = useCallback(async()=>{
 
         setIsItemLoading((prev)=>({
             ...prev,
@@ -548,7 +548,7 @@ const StoragePage = ()=>{
             setIsItemLoading(false)
             
         } 
-    }
+    },[storageName,user,storageId])
 
     //勾選:刪除
 
@@ -620,7 +620,7 @@ const StoragePage = ()=>{
     //頁面首次渲染:預設排序
     useEffect(()=>{
         fetchItemsByDefault();
-    },[storageName])
+    },[storageName,fetchItemsByDefault])
 
 
     return(
