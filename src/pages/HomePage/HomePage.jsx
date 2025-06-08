@@ -1,5 +1,5 @@
 import styles from "./HomePage.module.scss"
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { 
     auth, createStorage,getAllStorages, fetchStorageExpiredItems,
     getUserSetting, setupItemsCollection,
@@ -60,7 +60,66 @@ const HomePage = ()=>{
 
     //初始化設置
     //先檢查 
-    const checkHasUserStorageInitailized = async()=>{
+   
+
+    const initializeStorages = useCallback( async ( storageTitle, storageType)=> {
+        try {
+        setInintialState((prev)=>({
+                ...prev,
+                [storageType]:{
+                    isLoading: true,
+                    hasSet: false,
+                }
+        })) 
+        const response = await createStorage(user, storageTitle);
+
+        setInintialState((prev)=>({
+                ...prev,
+                [storageType]:{
+                    isLoading: false,
+                    hasSet: response === "success" ? true : false
+                }
+            }))
+        } catch (error) {
+            console.error(`儲位 ${storageTitle}初始化建立失敗：`,error)
+            if(error.message){
+                setInintialState((prev)=>({
+                    ...prev,
+                    [storageType]:{
+                        isLoading: true,
+                        hasSet: false,
+                        errorState: "reInitailze"
+                    }
+            })) 
+            }else{
+                setInintialState((prev)=>({
+                    ...prev,
+                    [storageType]:{
+                        isLoading: true,
+                        hasSet: false,
+                        errorState: "unknown"
+                    }
+            })) 
+            }
+        }
+    },[user])
+       
+
+
+    const initializeItems = useCallback(async()=>{
+        const response = await setupItemsCollection(user)
+        if(response.status === "success"){
+            setInintialState((prev)=>({
+                ...prev,
+                itemsInitialized: true
+            }))
+        }
+    },[user])
+    
+
+
+
+    const checkHasUserStorageInitailized = useCallback(async()=>{
         console.log("checkHasUserStorageInitailized trigger")
         try {
             if(user && user.uid){
@@ -106,63 +165,7 @@ const HomePage = ()=>{
                 icon: "error"
             })
         }
-    }
-
-
-
-    const initializeStorages = async ( storageTitle, storageType) => {
-               
-        try {
-           setInintialState((prev)=>({
-                ...prev,
-                [storageType]:{
-                    isLoading: true,
-                    hasSet: false,
-                }
-           })) 
-           const response = await createStorage(user, storageTitle);
-
-           setInintialState((prev)=>({
-                ...prev,
-                [storageType]:{
-                    isLoading: false,
-                    hasSet: response === "success" ? true : false
-                }
-            }))
-        } catch (error) {
-            console.error(`儲位 ${storageTitle}初始化建立失敗：`,error)
-            if(error.message){
-                setInintialState((prev)=>({
-                    ...prev,
-                    [storageType]:{
-                        isLoading: true,
-                        hasSet: false,
-                        errorState: "reInitailze"
-                    }
-               })) 
-            }else{
-                setInintialState((prev)=>({
-                    ...prev,
-                    [storageType]:{
-                        isLoading: true,
-                        hasSet: false,
-                        errorState: "unknown"
-                    }
-               })) 
-            }
-        }
-    }
-
-
-    const initializeItems = async()=>{
-        const response = await setupItemsCollection(user)
-        if(response.status === "success"){
-            setInintialState((prev)=>({
-                ...prev,
-                itemsInitialized: true
-            }))
-        }
-    }
+    },[user, initializeItems, initializeStorages])
 
     //再次設置預設
     const reInintailzeStorage = async(stoargeTitle, storageType)=>{
@@ -172,7 +175,7 @@ const HomePage = ()=>{
 
 
     //storage
-    const fetchAllStorages = async()=>{
+    const fetchAllStorages = useCallback(async()=>{
         setIsLoading((prev)=>({
             ...prev,
             allStorages: true
@@ -198,8 +201,9 @@ const HomePage = ()=>{
                 ...prev,
                 allStorages: false,
             }));
-        }, 500); 
-    }
+        }, 500)
+    },[user])
+        
 
     const handleTitleInputChange= async(e)=>{
         e.preventDefault();
@@ -265,48 +269,49 @@ const HomePage = ()=>{
     
 
     //過期檢查:所有項目
-   const getAllExpiredItems = async()=>{
-    console.log("getAllExpiredItems triggered")
-    setIsLoading((prev)=>({
-        ...prev,
-        expiredPanel: true,
-    }))
-    let allItemsCount = 0;
-    try {
-        const itemsInfo = await Promise.all(
-            storageNames.map(async(item)=>{
-                const response = await fetchStorageExpiredItems(user, item.id, 10, "today");
-                if(response.status === "success"){
-                    allItemsCount += item.totalCount;
-                    return {
-                        storageId: item.id, 
-                        items: response.data ,
-                        hasMore :response.hasMore,
-                        lastSortValue: response.lastSortValue,
-                        storageTitle : item.storageTitle,
-                        totalCount: item.totalCount,
-                    } ; 
-                }else{
-                    setFetchError((prev)=>({
-                        ...prev,
-                        expiredPanel: true,
-                    }))
-                    return {
-                        storageId: item.id, 
-                        error: response.error
+   const getAllExpiredItems = useCallback(async()=>{
+        console.log("getAllExpiredItems triggered")
+        setIsLoading((prev)=>({
+            ...prev,
+            expiredPanel: true,
+        }))
+        let allItemsCount = 0;
+        try {
+            const itemsInfo = await Promise.all(
+                storageNames.map(async(item)=>{
+                    const response = await fetchStorageExpiredItems(user, item.id, 10, "today");
+                    if(response.status === "success"){
+                        allItemsCount += item.totalCount;
+                        return {
+                            storageId: item.id, 
+                            items: response.data ,
+                            hasMore :response.hasMore,
+                            lastSortValue: response.lastSortValue,
+                            storageTitle : item.storageTitle,
+                            totalCount: item.totalCount,
+                        } ; 
+                    }else{
+                        setFetchError((prev)=>({
+                            ...prev,
+                            expiredPanel: true,
+                        }))
+                        return {
+                            storageId: item.id, 
+                            error: response.error
+                        }
                     }
-                }
-            })
-      )
-      setExpiredItems(itemsInfo)
-      setExpiredItemsCount(allItemsCount)
-      setIsLoading((prev)=>({
-        ...prev,
-        expiredPanel: false}))
-    } catch (error) {
-        console.error("fetch 過期項目失敗", error)
-    }
-   }
+                })
+        )
+        setExpiredItems(itemsInfo)
+        setExpiredItemsCount(allItemsCount)
+        setIsLoading((prev)=>({
+            ...prev,
+            expiredPanel: false}))
+        } catch (error) {
+            console.error("fetch 過期項目失敗", error)
+        }
+    },[storageNames, user])
+   
 
    const recheckStorageItems =  async(storageId) =>{
         try {
@@ -403,27 +408,23 @@ const HomePage = ()=>{
         } else {
             console.log('使用者資料載入中');
         }
-    }, [user]);
+    }, [user, checkHasUserStorageInitailized]);
 
 
     useEffect(()=>{
         if(hasDefaultSet){
-            //console.log("useEffect: hasDefaultSet is true"); 
+
             fetchAllStorages();
         }
-    },[hasDefaultSet])
+    },[hasDefaultSet, fetchAllStorages])
 
     useEffect(()=>{
         if(storageNames.length > 0){
-            //getAllExpiredItems()
-            //console.log('預計過期檢查')
+            getAllExpiredItems()
         }
-    },[storageNames])
+    },[storageNames, getAllExpiredItems])
 
 
-    useEffect(()=>{
-        //console.log('btn >0', (checkMsg.text) === "" && (storageCreated.length > 0))
-    },[handleTitleInputChange])
 
 
 if (isLoading.allStorages) {
