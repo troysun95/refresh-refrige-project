@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import styles from "./StoragePage.module.scss";
 import { Close } from "@mui/icons-material";
 import { getItemById, auth, updateItemById, createStorageItem } from "../../config/firebase";
@@ -65,7 +65,7 @@ const ItemModal =({
         setCheckMsg((prev) => ({ ...prev, [name]: setInputValid(name, value) }));
     };
 
-    const switchBtnDisabled = () => {
+    const switchBtnDisabled = useCallback(() => {
         const checkMsgItems = Object.values(checkMsg);
         const checkIsInputEmpty = () => {
             return (itemData.name && itemData.amount && itemData.expired_date && itemData.unit) ? false : true;
@@ -77,7 +77,8 @@ const ItemModal =({
         } else {
             setBtnDisabled(!(hasInputChanged && isAllValid && !isInputEmpty));
         }
-    };
+    },[itemData, checkMsg, isToCreate,  hasInputChanged])
+        
 
     const handleCreateItem = async () => {
         setNotifyContent({ type: "", text: "新增項目中" })
@@ -129,7 +130,7 @@ const ItemModal =({
         }
     };
 
-    const fetchStorageItemById = async () => {
+    const fetchStorageItemById = useCallback(async () => {
         const response = await getItemById(user, modalItemId);
         if (response.status === "success") {
             const data = response.data;
@@ -146,7 +147,8 @@ const ItemModal =({
                 console.log(`點擊 id 不存在`)
             }
         }
-    };
+    },[user, modalItemId])
+   
 
     const initailItemData = () => {
         setItemData({
@@ -163,13 +165,13 @@ const ItemModal =({
         if (!isToCreate && modalItemId) {
             fetchStorageItemById();
         }
-    }, [isToCreate, modalItemId]);
+    }, [isToCreate, modalItemId, fetchStorageItemById]);
 
     useEffect(() => {
         if (!modalItemId) {
             initailItemData();
         }
-    }, [isToCreate]);
+    }, [isToCreate, modalItemId]);
 
     useEffect(() => {
         setHasInputChanged(false);
@@ -177,7 +179,7 @@ const ItemModal =({
 
     useEffect(() => {
         switchBtnDisabled();
-    }, [checkMsg, itemData, hasInputChanged, isToCreate]); 
+    }, [checkMsg, itemData, hasInputChanged, isToCreate, switchBtnDisabled]); 
 
     return(
         <>
