@@ -1,5 +1,5 @@
 import styles from "./HomePage.module.scss"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { updateUserSettingFiled,} from "../../config/firebase";
 const InintailSettingModal = ({
     user, 
@@ -11,7 +11,7 @@ const InintailSettingModal = ({
     const [hasUpdated, setHasUpdated] = useState(false)
     
 
-    const updateHasDafaultSet = async()=>{
+    const updateHasDafaultSet = useCallback(async()=>{
         const response = await updateUserSettingFiled(user, "hasDefaultStorageSet", true)
         if(response === "success"){
             localStorage.setItem('hasDefaultInitialize', true)
@@ -22,13 +22,14 @@ const InintailSettingModal = ({
         }else{
             setHasUpdated(false)
         }
-    }
+    },[user, setHasDefaultSet])
+    
 
     useEffect(()=>{
         if(refrige.hasSet && freezer.hasSet && itemsInitialized ){
             updateHasDafaultSet()
         }
-    },[inintialState])
+    },[inintialState, refrige.hasSet, freezer.hasSet, itemsInitialized,updateHasDafaultSet])
 
     return(
         <div className={styles.initialModal}>
