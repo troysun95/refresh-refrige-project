@@ -206,11 +206,6 @@ const SignupPage = () => {
     },[stepSet, hasVerifyEmailSent, setIsUserSettingExist])
 
 
-    // useEffect(()=>{
-    //     console.log('isLoading is',isLoading, 'and stepone',stepSet.stepOne , 'signupDisabled is', signupDisabled)
-    // },[isLoading,stepSet, signupDisabled])
-
-
     useEffect(()=>{
         console.log('監聽到刷新頁面行為')
     },[navigate])
