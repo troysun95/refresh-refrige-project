@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
         });
 
         return unsubscribe; 
-    }, []);
+    }, [isPersistSet]);
 
 
     return (

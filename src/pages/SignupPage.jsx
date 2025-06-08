@@ -203,7 +203,7 @@ const SignupPage = () => {
                 console.log("步驟未完成，檢查 ：",stepSet.stepOne , stepSet.stepTwo , stepSet.stepThree)
             }
         }
-    },[stepSet])
+    },[stepSet, hasVerifyEmailSent, setIsUserSettingExist])
 
 
     // useEffect(()=>{

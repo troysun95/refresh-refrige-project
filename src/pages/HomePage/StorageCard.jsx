@@ -1,6 +1,6 @@
 
 import styles from './HomePage.module.scss'
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {  updateStorageTitle, deleteStorage, getStorageSortedItems} from '../../config/firebase';
 import { getFormatedDate } from '../../fn';
 import { useNavigatePage } from '../../contexts/NavigatePageContext';
@@ -141,7 +141,7 @@ const StorageCard = ({
 
     const previewItemInitailize = useRef(false)
 
-    const fetchStoragePreviewData = async()=>{
+    const fetchStoragePreviewData = useCallback(async()=>{
         if(storageTitle){
             setIsPreveiwLoading(true)
             const response = await getStorageSortedItems(user, id, "created_at", true, 5)
@@ -168,8 +168,9 @@ const StorageCard = ({
             setIsPreveiwLoading(false)
         }else{
             console.log(`StorageCard ${storageTitle} 尚未傳入`)
-        } 
-    }
+        }
+    },[storageTitle, user, id])
+    
 
     
 
@@ -177,9 +178,8 @@ const StorageCard = ({
         if(storageTitle && !previewItemInitailize.current ){
             fetchStoragePreviewData()
             previewItemInitailize.current = true
-            console.log(`儲位 ${storageTitle} items`, previewItems)
         }
-    },[storageTitle, previewItems.length])
+    },[storageTitle, previewItems.length, previewItems, fetchStoragePreviewData])
 
 
 
