@@ -2,9 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [feature/deploySetting]
+    branches: [dev]
   pull_request:
-    branches: [feature/deploySetting]
+    branches: [dev]
 
 permissions:
     contents: write
