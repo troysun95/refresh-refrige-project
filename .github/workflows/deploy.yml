@@ -1,46 +1,4 @@
-
-# name: Deploy to GitHub pages
-
-# on:
-#   push:
-#     branches: [feature/deploySetting]
-#   pull_request:
-#     branches: [feature/deploySetting]
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-
-#     strategy:
-#       matrix:
-#         node-version: [22.x]
-
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v2
-
-#       - name: Set up Node.js ${{ matrix.node-version }}
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: ${{ matrix.node-version }}
-
-#       - name: Install dependencies
-#         run: npm install
-
-#       - name: Deploy
-#         run: |
-#           git config --global user.name $user_name
-#           git config --global user.email $user_email
-#           git remote set-url origin https://${github_token}@github.com/${repository}
-#           npm run deploy
-#         env:
-#           user_name: 'github-actions[bot]'
-#           user_email: 'github-actions[bot]@users.noreply.github.com'
-#           github_token: ${{ secrets.DEPLOY_SECRET }}
-#           repository: ${{ github.repository }}
-
-
-name: Deploy to GitHub pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -51,18 +9,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write 
-      pages: write    
-      id-token: write 
 
     strategy:
       matrix:
-        node-version: [22.13.0]
+        node-version: [22.13.0] 
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 
+        uses: actions/checkout@v4
 
       - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -72,13 +26,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      
-      - name : Builed and Prepare for Deploy
-        run : npm run build
-
       - name: Deploy
-
-        run: npm run deploy
+        run: |
+          git config --global user.name "github-actions[bot]" 
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" 
+          git remote set-url origin https://${{ secrets.DEPLOY_SECRET }}@github.com/${{ github.repository }}
+          npm run deploy
         env:
-          
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }} 
