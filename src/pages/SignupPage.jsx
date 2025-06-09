@@ -180,7 +180,6 @@ const SignupPage = () => {
         }
     }
 
-
     useEffect(() => {
         if(isValid > 0){
             console.log('呼叫切換disabled')
@@ -188,22 +187,6 @@ const SignupPage = () => {
         updateBtnDisabled(isValid, setSignupDisabled, isLoading);
     }, [isValid, isLoading]);
 
-
-    useEffect(()=>{
-        if(hasVerifyEmailSent){ 
-            if(stepSet.stepOne && stepSet.stepTwo && stepSet.stepThree ){
-                setIsUserSettingExist(true)
-                Swal.fire({
-                    title:'註冊成功',
-                    text : `使用者 ${auth.currentUser.displayName} 資料庫已初始化`, 
-                    icon:"success"
-                })
-                setIsLoading(false)
-            }else{  
-                console.log("步驟未完成，檢查 ：",stepSet.stepOne , stepSet.stepTwo , stepSet.stepThree)
-            }
-        }
-    },[stepSet, hasVerifyEmailSent, setIsUserSettingExist])
 
 
     useEffect(()=>{
@@ -272,4 +255,4 @@ const SignupPage = () => {
     );
 };
 
-export default SignupPage;
+export default SignupPage
