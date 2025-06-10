@@ -50,8 +50,8 @@ const StoragePage = ()=>{
     
     //不同排序 items 、 搜尋的 items 結果 、 items 預計渲染 
     const [itemsBySort, setItemsBySort] = useState({
-        "最近建立": {items:[],lastSortValue: null, hasMore: true, updateToNew: false, },
-        "最快過期": {items:[],lastSortValue: null, hasMore: true, updateToNew: false, },
+        "最近建立": {items:[],lastSortValue: null, hasMore: true, hasDefaultFetched : false, updateToNew: false, },
+        "最快過期": {items:[],lastSortValue: null, hasMore: true, hasDefaultFetched : false, updateToNew: false, },
     })
     
     const [itemsContent, setItemsContent] = useState({
@@ -170,8 +170,8 @@ const StoragePage = ()=>{
 
     //切換資料排序
     const handleItemsBySort = async(sortType)=>{
-
-        if(itemsBySort[sortType].updateToNew){
+        //根據 updateToNew 判斷是否需要更新資料
+        if(itemsBySort[sortType].hasDefaultFetched){
 
             setItemsContent((prev)=>({
                 ...prev,
@@ -180,12 +180,15 @@ const StoragePage = ()=>{
                 lastSortValue : itemsBySort[sortType].lastSortValue,
             }))
         }else{
+            console.log(`排序方式 ${sortType} 首次載入資料`)
             const itemsUpdated = await fetchItemsBySort(sortType)
             if(itemsUpdated.status === "success"){
                 setItemsBySort((prev)=>({
                     ...prev,
                     [sortType]:{
+                        //載入sort 的第一筆資料
                         items: itemsUpdated.newItems,
+                        hasDefaultFetched: true,
                         updateToNew: true,
                         hasMore: itemsUpdated.hasMore,
                         lastSortValue: itemsUpdated.lastSortValue
@@ -204,6 +207,7 @@ const StoragePage = ()=>{
         console.log("getMoreData triggered")
         let response ;
         if(searchShow){
+            console.log('getMoreData at search is on')
             response = await fetchStorageSearchData (
                 user, storageId, limitNumber, searchInfo.searchBy, "desc", 
                 setSearchInfo.sortOfTime,  itemsContent.lastSortValue,
@@ -221,7 +225,6 @@ const StoragePage = ()=>{
             
             response = await fetchItemsBySort(arrangeClicked)
 
-            console.log('getmoreDAta responses: ', response)
             if(response.status === "success"){
                 const updatedItems = [
                     ...itemsContent.items,
@@ -232,6 +235,8 @@ const StoragePage = ()=>{
                     setItemsBySort((prevItems)=>({
                         ...prevItems,
                         [arrangeClicked]:{
+                            //其他東西照常
+                            ...prevItems[arrangeClicked],
                             items:  updatedItems,
                             hasMore: response.hasMore,
                             lastSortValue: response.lastSortValue,
@@ -261,70 +266,144 @@ const StoragePage = ()=>{
 
 
 
-    const handleItemCreated = async(newItem, itemId)=>{
-        if(!newItem || !itemId){
-            console.log('itm 新增未完成, !newItem || !itemDocId', newItem  ,itemId)
+    // const handleItemCreated = async(newItem, itemId)=>{
+    //     if(!newItem || !itemId){
+    //         console.log('itm 新增未完成, !newItem || !itemDocId', newItem  ,itemId)
 
-            return;
-        }
+    //         return;
+    //     }
 
-        const newItemFormated = {
-            ...newItem,
-            id:itemId,
-            itemId:itemId,
-            created_at : formateDateFromJS(newItem.created_at),
-            expired_date: formateDateFromJS(newItem.expired_date),
-        }
+    //     const newItemFormated = {
+    //         ...newItem,
+    //         id:itemId,
+    //         itemId:itemId,
+    //         created_at : formateDateFromJS(newItem.created_at),
+    //         expired_date: formateDateFromJS(newItem.expired_date),
+    //     }
 
     
-        if(!arrangeClicked){
-            console.log("未選中項目排序")
-            return
-        }
+    //     if(!arrangeClicked){
+    //         console.log("未選中項目排序")
+    //         return
+    //     }
 
-        if(arrangeClicked === "最近建立") {
-            setItemsContent((prevContent)=>{
-                let newItems;
-                const prevItems = prevContent.items || []
+    //     if(arrangeClicked === "最近建立") {
+    //         setItemsContent((prevContent)=>{
+    //             let newItems;
+    //             const prevItems = prevContent.items || []
 
-                if(prevItems.length >= limitNumber){
-                    newItems =  [
-                        newItemFormated,
-                        ...prevItems.slice(0, prevItems.length - 1)
-                    ]
-                }else{
-                    newItems =[newItemFormated, ...prevItems] 
-                }
+    //             if(prevItems.length >= limitNumber){
+    //                 newItems =  [
+    //                     newItemFormated,
+    //                     ...prevItems.slice(0, prevItems.length - 1)
+    //                 ]
+    //             }else{
+    //                 newItems =[newItemFormated, ...prevItems] 
+    //             }
                 
-                return{
-                    ...prevContent,
-                    items: newItems
-                }
-            })
+    //             return{
+    //                 ...prevContent,
+    //                 items: newItems
+    //             }
+    //         })
 
-        }else{
+    //     }else{
 
-            setItemsContent((prevContent) => {
-                const prevItems = prevContent.items || [];
-               // console.log('prevContent ', prevContent)
-                let  newItems = [newItemFormated, ...prevItems];
+    //         setItemsContent((prevContent) => {
+    //             const prevItems = prevContent.items || [];
+    //            // console.log('prevContent ', prevContent)
+    //             let  newItems = [newItemFormated, ...prevItems];
                 
-                //若要排序要改回 js Date 型式
-                newItems.sort((a,b)=> new Date(a.expired_date).getTime() - new Date(b.expired_date).getTime())
-               //const updatedItems = newItems.slice(0, prevItems.length )
+    //             //若要排序要改回 js Date 型式
+    //             newItems.sort((a,b)=> new Date(a.expired_date).getTime() - new Date(b.expired_date).getTime())
+    //            //const updatedItems = newItems.slice(0, prevItems.length )
                 
-                return {
-                    ...prevContent,
-                    items: newItems.slice(0, prevItems.length),
+    //             return {
+    //                 ...prevContent,
+    //                 items: newItems.slice(0, prevItems.length),
                     
-                }
-            })
+    //             }
+    //         })
 
-        }   
+    //     }   
 
 
-    }
+    // }
           
+    const handleItemCreated = async (newItem, itemId) => {
+    if (!newItem || !itemId) {
+        console.log('itm 新增未完成, !newItem || !itemDocId', newItem, itemId);
+        return;
+    }
+
+    const newItemFormated = {
+        ...newItem,
+        id: itemId,
+        itemId: itemId,
+        created_at: formateDateFromJS(newItem.created_at),
+        expired_date: formateDateFromJS(newItem.expired_date),
+    };
+
+    if (!arrangeClicked) {
+        console.log("未選中項目排序");
+        return;
+    }
+
+    if (arrangeClicked === "最近建立") {
+        setItemsContent((prevContent) => {
+            let newItems;
+            const prevItems = prevContent.items || [];
+
+            if (prevItems.length >= limitNumber) {
+                newItems = [
+                    newItemFormated,
+                    ...prevItems.slice(0, prevItems.length - 1),
+                ];
+            } else {
+                newItems = [newItemFormated, ...prevItems];
+            }
+
+            return {
+                ...prevContent,
+                items: newItems,
+            };
+        });
+
+        setItemsBySort((prevSort) => ({
+            ...prevSort,
+            "最近建立": {
+                ...prevSort["最近建立"],
+                items: [newItemFormated, ...prevSort["最近建立"].items],
+                updateToNew: true, // 同步更新 updateToNew
+            },
+        }));
+    } else {
+        setItemsContent((prevContent) => {
+            const prevItems = prevContent.items || [];
+            let newItems = [newItemFormated, ...prevItems];
+
+            newItems.sort(
+                (a, b) =>
+                    new Date(a.expired_date).getTime() -
+                    new Date(b.expired_date).getTime()
+            );
+
+            return {
+                ...prevContent,
+                items: newItems.slice(0, prevItems.length),
+            };
+        });
+
+        setItemsBySort((prevSort) => ({
+            ...prevSort,
+            "最快過期": {
+                ...prevSort["最快過期"],
+                items: [newItemFormated, ...prevSort["最快過期"].items],
+                updateToNew: true, 
+            },
+        }));
+    }
+};
    
     const handleItemUpdated = (itemId, updatedItem) => {
         console.log('更新項目：', updatedItem);
@@ -497,6 +576,7 @@ const StoragePage = ()=>{
                     ...prev,
                     "最近建立":{
                         items: formatedData,
+                        hasDefaultFetched: true,
                         updateToNew: true,
                         hasmore: response.hasMore,
                         lastSortValue : response.lastSortValue,
@@ -527,6 +607,7 @@ const StoragePage = ()=>{
                     "最近建立":{
                         items: [],
                         updateToNew: true,
+                        hasDefaultFetched: true,
                     }
                 }))
                 setItemsContent((prev)=>({
@@ -758,6 +839,7 @@ const StoragePage = ()=>{
                                                         
                                                 </div>
                                                 <span> ({itemsBySort[item].items.length})</span>
+                                                <span>{itemsBySort[item].hasDefaultFetched > 0 ? 123 : 456}</span>
                                             </div > 
                                         ))}
                                     </div>
