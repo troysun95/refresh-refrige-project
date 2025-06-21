@@ -40,6 +40,7 @@ export const getFormatedDate =(timeStampObj)=>{
 
 //時間(js date)轉換
 export const formateDateFromJS = (jsDate)=>{
+
     const year = jsDate.getFullYear();
     const month = String(jsDate.getMonth() + 1).padStart(2, '0');
     const day = String(jsDate.getDate()).padStart(2, '0')

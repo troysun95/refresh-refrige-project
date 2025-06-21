@@ -1,12 +1,13 @@
 import styles from "./HomePage.module.scss"
 import { useEffect, useRef, useState, useCallback } from "react";
 import { 
-    auth, createStorage,getAllStorages, fetchStorageExpiredItems,
+    auth, createStorage,getAllStorages, 
+    //fetchStorageExpiredItems,
     getUserSetting, setupItemsCollection,
 } from "../../config/firebase";
 import Navbar from "../../components/Navbar";
 import InintailSettingModal from "./InintailSettingModal";
-import ExpiredItemsPanel from './ExpiredItemsPanel';
+//import ExpiredItemsPanel from './ExpiredItemsPanel';
 import StorageCard from './StorageCard';
 import BrandHeader from '../../components/BrandHeader';
 import {AddCircleOutline} from "@mui/icons-material"
@@ -26,8 +27,8 @@ const HomePage = ()=>{
     //fetchAllstorage 觸發？
     const [hasStorageNamesFetched, setHasStorageNamesFetched] = useState(false)
     const [storageNames, setStorageNames] = useState([]);
-    const [expiredItems, setExpiredItems] = useState([]);
-    const [expiredItemsCount , setExpiredItemsCount] = useState(0)
+    //const [expiredItems, setExpiredItems] = useState([]);
+    //const [expiredItemsCount , setExpiredItemsCount] = useState(0)
     const [fetchError, setFetchError] = useState({
         allStorages: false,
         expiredPanel: false,
@@ -269,131 +270,131 @@ const HomePage = ()=>{
     
 
     //過期檢查:所有項目
-   const getAllExpiredItems = useCallback(async()=>{
-        console.log("getAllExpiredItems triggered")
-        setIsLoading((prev)=>({
-            ...prev,
-            expiredPanel: true,
-        }))
-        let allItemsCount = 0;
-        try {
-            const itemsInfo = await Promise.all(
-                storageNames.map(async(item)=>{
-                    const response = await fetchStorageExpiredItems(user, item.id, 10, "today");
-                    if(response.status === "success"){
-                        allItemsCount += item.totalCount;
-                        return {
-                            storageId: item.id, 
-                            items: response.data ,
-                            hasMore :response.hasMore,
-                            lastSortValue: response.lastSortValue,
-                            storageTitle : item.storageTitle,
-                            totalCount: item.totalCount,
-                        } ; 
-                    }else{
-                        setFetchError((prev)=>({
-                            ...prev,
-                            expiredPanel: true,
-                        }))
-                        return {
-                            storageId: item.id, 
-                            error: response.error
-                        }
-                    }
-                })
-        )
-        setExpiredItems(itemsInfo)
-        setExpiredItemsCount(allItemsCount)
-        setIsLoading((prev)=>({
-            ...prev,
-            expiredPanel: false}))
-        } catch (error) {
-            console.error("fetch 過期項目失敗", error)
-        }
-    },[storageNames, user])
+//    const getAllExpiredItems = useCallback(async()=>{
+//         console.log("getAllExpiredItems triggered")
+//         setIsLoading((prev)=>({
+//             ...prev,
+//             expiredPanel: true,
+//         }))
+//         let allItemsCount = 0;
+//         try {
+//             const itemsInfo = await Promise.all(
+//                 storageNames.map(async(item)=>{
+//                     const response = await fetchStorageExpiredItems(user, item.id, 10, "today");
+//                     if(response.status === "success"){
+//                         allItemsCount += item.totalCount;
+//                         return {
+//                             storageId: item.id, 
+//                             items: response.data ,
+//                             hasMore :response.hasMore,
+//                             lastSortValue: response.lastSortValue,
+//                             storageTitle : item.storageTitle,
+//                             totalCount: item.totalCount,
+//                         } ; 
+//                     }else{
+//                         setFetchError((prev)=>({
+//                             ...prev,
+//                             expiredPanel: true,
+//                         }))
+//                         return {
+//                             storageId: item.id, 
+//                             error: response.error
+//                         }
+//                     }
+//                 })
+//         )
+//         setExpiredItems(itemsInfo)
+//         setExpiredItemsCount(allItemsCount)
+//         setIsLoading((prev)=>({
+//             ...prev,
+//             expiredPanel: false}))
+//         } catch (error) {
+//             console.error("fetch 過期項目失敗", error)
+//         }
+//     },[storageNames, user])
    
 
-   const recheckStorageItems =  async(storageId) =>{
-        try {
-            const response = await fetchStorageExpiredItems(user, storageId, 10, "today")
-            if(response.status === "failed"){
-                setExpiredItems()
-            }else{
-                setExpiredItems((prevItems)=>{
-                    return prevItems.map((item)=>{
-                      if(item.id === storageId){
-                        return {
-                            storageId :item.id,
-                            items: response.data,
-                            hasMore: response.hasMore,
-                            lastSortValue : response.lastSortValue,
-                            error: ""
-                        }
-                      } 
-                      return item;
-                    })
-                })
+//    const recheckStorageItems =  async(storageId) =>{
+//         try {
+//             const response = await fetchStorageExpiredItems(user, storageId, 10, "today")
+//             if(response.status === "failed"){
+//                 setExpiredItems()
+//             }else{
+//                 setExpiredItems((prevItems)=>{
+//                     return prevItems.map((item)=>{
+//                       if(item.id === storageId){
+//                         return {
+//                             storageId :item.id,
+//                             items: response.data,
+//                             hasMore: response.hasMore,
+//                             lastSortValue : response.lastSortValue,
+//                             error: ""
+//                         }
+//                       } 
+//                       return item;
+//                     })
+//                 })
 
-            }
-        } catch (error) {
-            console.error("過期項目重新讀取失敗", error)
-        }
-   }
+//             }
+//         } catch (error) {
+//             console.error("過期項目重新讀取失敗", error)
+//         }
+//    }
 
 
-   const getLastsortValue = (storageId) =>{
-        if(!expiredItems || !storageId){
-            console.log('expiredItems 設置 state 失敗')
-            return
-        }
+//    const getLastsortValue = (storageId) =>{
+//         if(!expiredItems || !storageId){
+//             console.log('expiredItems 設置 state 失敗')
+//             return
+//         }
 
-        if( !storageId){
-            console.log('storageId 不存在 或 傳入失敗')
-            return
-        }
+//         if( !storageId){
+//             console.log('storageId 不存在 或 傳入失敗')
+//             return
+//         }
         
-       const foundItem = expiredItems.find((item)=> item.storageId === storageId)
-       return foundItem ? foundItem.lastSortValue : null;
-    }
+//        const foundItem = expiredItems.find((item)=> item.storageId === storageId)
+//        return foundItem ? foundItem.lastSortValue : null;
+//     }
 
-   const getMoreStorageExpiredItems = async(storageId)=>{
-        try {
-           const lastSortValue =  getLastsortValue(storageId)
-           if(!lastSortValue){
-            console.log('載入更多依據讀取失敗 或 不存在',lastSortValue)
-           }
-           const response = await fetchStorageExpiredItems(user, storageId, 10, "today", lastSortValue)
+//    const getMoreStorageExpiredItems = async(storageId)=>{
+//         try {
+//            const lastSortValue =  getLastsortValue(storageId)
+//            if(!lastSortValue){
+//             console.log('載入更多依據讀取失敗 或 不存在',lastSortValue)
+//            }
+//            const response = await fetchStorageExpiredItems(user, storageId, 10, "today", lastSortValue)
 
-           if(response.status === "failed"){
-            console.log("讀取更多過期項目失敗")
-           }else{
-            setExpiredItems((prevItems)=>{
-                return prevItems.map((item)=>{
-                    if(item.storageId === storageId){
-                        return {
-                            ...item,
-                            items: [...item.items, ...response.data],
-                            hasMore: response.hasMore,
-                            lastSortValue : response.lastSortValue
-                        }
-                    }else{
-                        return item
-                    }
-                })
-            })
-           }
-        } catch (error) {
-            console.error("載入更多過期項目失敗",error)
-        }
-   }
+//            if(response.status === "failed"){
+//             console.log("讀取更多過期項目失敗")
+//            }else{
+//             setExpiredItems((prevItems)=>{
+//                 return prevItems.map((item)=>{
+//                     if(item.storageId === storageId){
+//                         return {
+//                             ...item,
+//                             items: [...item.items, ...response.data],
+//                             hasMore: response.hasMore,
+//                             lastSortValue : response.lastSortValue
+//                         }
+//                     }else{
+//                         return item
+//                     }
+//                 })
+//             })
+//            }
+//         } catch (error) {
+//             console.error("載入更多過期項目失敗",error)
+//         }
+//    }
 
-   const handleButtonClicked = (storageId, name)=>{
-    if(name === "recheck"){
-        recheckStorageItems(storageId)
-    }else{
-        getMoreStorageExpiredItems(storageId)
-    }
-   }    
+//    const handleButtonClicked = (storageId, name)=>{
+//     if(name === "recheck"){
+//         recheckStorageItems(storageId)
+//     }else{
+//         getMoreStorageExpiredItems(storageId)
+//     }
+//    }    
 
 
 
@@ -418,11 +419,11 @@ const HomePage = ()=>{
         }
     },[hasDefaultSet, fetchAllStorages])
 
-    useEffect(()=>{
-        if(storageNames.length > 0){
-            getAllExpiredItems()
-        }
-    },[storageNames, getAllExpiredItems])
+    // useEffect(()=>{
+    //     if(storageNames.length > 0){
+    //         getAllExpiredItems()
+    //     }
+    // },[storageNames, getAllExpiredItems])
 
 
 
@@ -500,14 +501,14 @@ if (isLoading.allStorages) {
                 
                 <div className={styles.mainContent}> 
                     {/* 過期物品區 */}
-                    <ExpiredItemsPanel 
+                    {/* <ExpiredItemsPanel 
                         isLoading={isLoading}
                         fetchError={fetchError}
                         expiredItems={expiredItems}
                         expiredItemsCount={expiredItemsCount}
                         onButtonClicked={handleButtonClicked}
 
-                    />
+                    /> */}
                     <hr className={styles.mainHr}/>
                     <h3 className={styles.previewPanelTitle}>儲位預覽區 ：</h3>
                     <hr className={styles.secindaryHr}/>

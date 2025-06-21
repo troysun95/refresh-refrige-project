@@ -103,6 +103,7 @@ export const fetchStorageSearchData =async(
       input : input, 
       sortAfter : sortAfter,
     }
+
     const response = await axiosInstance.get("/getStorageDataBySearch",{
       params
     })
@@ -606,7 +607,7 @@ export const getStorageSortedItems = async(
     } : null
 
 
-    console.log('return in lastSortValue : nextSortValue is ',nextSortValue)
+
     return {
       status: "success",
       data: data,
