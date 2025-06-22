@@ -516,10 +516,22 @@ export const updateItemById = async(
 )=>{
   try {
     const itemDocRef = getItemDocRef(user, itemId)
+  
     const isExist = checkIsDocExist(itemDocRef)
     if(isExist){
+      //應該先叫出原本資料
+      const docSnap = await getDoc(itemDocRef);
+      const prevData =  docSnap.data()
+
+      const updatedData  = [{
+        ...prevData,
+        ...newItem,
+      }]
+
+
+      //再執行 update
       updateDoc(itemDocRef, {
-        ...newItem
+        ...updatedData[0]
       })
       return "success"
     }else{
@@ -558,7 +570,7 @@ export const deleteItemById = async (user, itemId) => {
 };
 
 
-//get storage items , 篩選 ＋ 排序 : storageId  + created_at 
+//get storage items , 篩選 ＋ 排序 : storageId  + created_a
 export const getStorageSortedItems = async(
   user, 
   storageId, 
@@ -588,7 +600,6 @@ export const getStorageSortedItems = async(
 
     //根據  limitNumber 調整
     if(limitNumber > 0){
-
       itemQuery = query(itemQuery, limit(limitNumber));
     }
     
@@ -605,7 +616,6 @@ export const getStorageSortedItems = async(
       sortBy: docs[docs.length - 1].get(sortBy),
       __name__: docs[docs.length - 1].id
     } : null
-
 
 
     return {

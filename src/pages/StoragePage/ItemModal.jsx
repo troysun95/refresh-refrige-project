@@ -34,6 +34,7 @@ const ItemModal =({
     const [btnDisabled, setBtnDisabled] = useState(false);
     const [hasInputChanged, setHasInputChanged] = useState(false);
     const [notifyContent, setNotifyContent] = useState({ type: "", text: "" });
+    const [isProcessing, setIsProcessing] = useState(false)
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
@@ -54,6 +55,15 @@ const ItemModal =({
         }
         if (name === "notes" && value.length > 500) {
             return { type: "error", text: "字數不可超過 500" };
+        }
+        //建立日期不能超過今天
+        if(name === "created_at"){
+            if (new Date(value) > new Date()){
+                return {
+                    type: "error",
+                    text: "建立日期不可超過今天"
+                }
+            }
         }
         return { type: "", text: "" };
     };
@@ -81,6 +91,7 @@ const ItemModal =({
         
 
     const handleCreateItem = async () => {
+        setIsProcessing(true)
         setNotifyContent({ type: "", text: "新增項目中" })
         setBtnDisabled(true)
         const jsCreateDate = new Date();
@@ -95,18 +106,23 @@ const ItemModal =({
 
         if (status === "success" && itemId) {
             setNotifyContent({ type: "", text: "項目新增成功" });
+            setIsProcessing(false)
             //重新渲染畫面
             onItemCreated(newItem, itemId);
             setTimeout(() => {
                 setNotifyContent({ type: "", text: "" });
+                
                 setIsModalOpen(false);
-            }, 2000);
+
+            }, 3000);
         } else {
             setNotifyContent({ type: "error", text: "項目新增失敗" });
+            setIsProcessing(false)
         }
     };
 
     const handleUpdateItemData = async () => {
+        setIsProcessing(true)
         setNotifyContent({ type: "", text: "項目更新中" });
         setBtnDisabled(true)
         const newItemData = {
@@ -114,6 +130,7 @@ const ItemModal =({
             expired_date: new Date(itemData.expired_date),
             created_at: new Date(itemData.created_at),
         };
+
         const updateState = await updateItemById(user, modalItemId, newItemData);
 
         if (updateState === "success") {
@@ -121,12 +138,15 @@ const ItemModal =({
             if (onItemUpdated) {
                 onItemUpdated(modalItemId, newItemData);
             }
+            setIsProcessing(false)
             setTimeout(() => {
                 setNotifyContent({ type: "", text: "" });
-                setIsModalOpen(false);
-            }, 1000);
+                
+                setIsModalOpen(false)
+            }, 3000);
         } else {
             setNotifyContent({ type: "error", text: "項目更新失敗" });
+            setIsProcessing(false)
         }
     };
 
@@ -180,6 +200,7 @@ const ItemModal =({
     useEffect(() => {
         switchBtnDisabled();
     }, [checkMsg, itemData, hasInputChanged, isToCreate, switchBtnDisabled]); 
+
 
     return(
         <>
@@ -251,6 +272,7 @@ const ItemModal =({
                                 name="created_at" 
                                 defaultValue={itemData.created_at}
                                 onChange={handleInputChange}
+                                max={new Date().toISOString().split("T")[0]}
                             />
                             <span style={{color: `${checkMsg["created_at"].type === "error" ? "red" : "black"}`}}>
                             {checkMsg["created_at"].text }
@@ -293,24 +315,35 @@ const ItemModal =({
                     </div> */}
                 </div>
                     <div className={styles.btnPanel}>
-                        <button onClick={handleCloseModal}>取消</button>
-                        {isToCreate ? (
-                                <button 
-                                    onClick={handleCreateItem}
-                                    disabled={btnDisabled}
-                                >   
-                                    新增
-                                </button>
-                            ):(
-                                <button 
-                                    onClick={handleUpdateItemData}  
-                                    disabled={btnDisabled}
-                                >
-                                    更新
-                                </button>
-                            )
-                        }
+                        {isProcessing ? (
+                            <button>處理中...</button>
+                        ):(<>
+                            <button onClick={handleCloseModal}>取消</button>
+                            {isToCreate ? (
+                                    <button 
+                                        onClick={()=>{
+                                            //setIsProcessing(true)
+                                            handleCreateItem()
+                                        }}
+                                        disabled={btnDisabled}
+                                    >   
+                                        新增
+                                    </button>
+                                ):(
+                                    <button 
+                                    onClick={()=>{
+                                        //setIsProcessing(true)
+                                        handleUpdateItemData()
+                                    }} 
+                                        disabled={btnDisabled}
+                                    >
+                                        更新
+                                    </button>
+                                )
+                            }
+                        </>)} 
                     </div>
+                    <div>{isProcessing ? "處理中" :"尚未開始"} </div>
                     {notifyContent.text.length > 0  ?(
                         <>
                             <div className={styles.notifyPopout}>

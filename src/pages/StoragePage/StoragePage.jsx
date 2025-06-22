@@ -316,77 +316,103 @@ const StoragePage = ()=>{
     }   
 
 
+    //處理因改變項目，而重新排序
+    const reArrangeItems = async(newItems, sortBy)=>{
+
+        const sortKey = sortBy === '最近建立' ? "created_at" : "expired_date";
+        const sortOrderDesc = sortBy === '最近建立';
+        
+        try{
+            const response = await getStorageSortedItems(
+                user, storageId, sortKey, sortOrderDesc,
+                1, itemsBySort[sortBy].lastSortValue
+            );
+
+
+            if(response.status !== "success" || !response.data){
+                console.log('取得資料失敗')
+                return  {
+                    status: "failed",
+                    data:null,
+                }
+            }
+    
+    
+            const nextItem = response.data[0]
+    
+            //檢查是否有因為總資料數為 1 時，取重複資料狀況
+
+            if(!nextItem || newItems.some(item => item.id === nextItem.id)){
+                console.log('無下一筆項目, 無需重新排序')
+                return  {
+                    status: "success",
+                    data: newItems,
+                }
+            }
+
+            const formatedNextItem = {
+                ...nextItem,
+                created_at: getFormatedDate(nextItem.created_at),
+                expired_date: getFormatedDate(nextItem.expired_date),
+            }
+    
+            console.log('下一筆項目：', formatedNextItem)
+    
+            
+            const updatedItems=[
+                ...newItems,
+                formatedNextItem
+            ]
+            
+    
+            updatedItems.sort((a, b) => {
+                const valA = new Date(a[sortKey]);
+                const valB = new Date(b[sortKey]);
+                return sortOrderDesc ? (valB - valA) : (valA - valB);
+            });
+    
+    
+            const arrangedSortKey = updatedItems.map((item)=> item[sortKey])
+            if(!updatedItems){
+                console.log('更新後的項目為空，無需更新')
+                return;
+            }else{
+
+                console.log(`重新排列 ${sortKey}`, arrangedSortKey)
+            }
+
+            return {
+                status:"success",
+                data : updatedItems.slice(0, updatedItems.length - 1)
+            }
+
+        }catch(error){
+            console.log('未成功取的下一筆資料進行排序',error)
+            return {
+                status:"failed",
+                data :null
+            }
+        }
+        
+        
+    }
+
+
+
+
+
     //處理完再傳進去
     const  updateItemsAfterChange = async(
-        itemsUpdated,
+        newItems,
         sortBy,
      )=> {
 
-        console.log('updateItemsAfterChange triggerd!  and newItems :' , itemsUpdated )
-        
-        const sortKey = sortBy === '最近建立' ? "created_at" : "expired_date";
-        const sortOrderDesc = sortBy === '最近建立';
 
-        console.log('sortBy clicked:',sortBy)
-        console.log('sortKey :',sortKey , 'sortOrderDesc:',sortOrderDesc)
-
-        //呼叫下一筆
-        const response = await getStorageSortedItems(
-            user, storageId, sortKey, sortOrderDesc,
-            1, itemsBySort[sortBy].lastSortValue
-        );
-
-        const nextItem = response.data[0]
-
-        if(!nextItem){
-            console.log('沒有下一筆項目，無需重新排列')
-            return;
-        }
-
-
-        const formatedNextItem = {
-            ...nextItem,
-            created_at: getFormatedDate(nextItem.created_at),
-            expired_date: getFormatedDate(nextItem.expired_date),
-        }
-
-        console.log('formatedNextItem', formatedNextItem)
-
-        
-        const updatedItems=[
-            ...itemsUpdated,
-            formatedNextItem
-        ]
-        
-    
-        // updatedItems.sort((a, b) => {
-        //     const valA = a[sortKey];
-        //     const valB = b[sortKey];
-        //     return sortOrderDesc ? (valB - valA) : (valA - valB);
-        // });
-
-        updatedItems.sort((a, b) => {
-            const valA = new Date(a[sortKey]);
-            const valB = new Date(b[sortKey]);
-            return sortOrderDesc ? (valB - valA) : (valA - valB);
-        });
-
-
-        const arrangedSortKey = updatedItems.map((item)=> item[sortKey])
-        if(!updatedItems){
-            console.log('更新後的項目為空，無需更新')
-            return;
-        }else{
-            console.log(`重新排列 ${sortKey}`, arrangedSortKey)
-            
-        }
-
-        //更新值進去
-
+        console.log('setState items :', newItems)
         setItemsContent((prevContent) => {
             return {
                 ...prevContent,
-                items: updatedItems.slice(0, updatedItems.length - 1), // 保持原有數量
+                items: newItems 
             }
         });
 
@@ -395,7 +421,7 @@ const StoragePage = ()=>{
             
             [sortBy]: { 
                 ...prevSort[sortBy],
-                items: updatedItems.slice(0, updatedItems.length - 1), 
+                items: newItems, 
             },
 
             //將其他 sortBy 的 needUpdate 改為 true
@@ -414,30 +440,39 @@ const StoragePage = ()=>{
 
           
     const handleItemCreated = async (newItem, itemId) => {
-    if (!newItem || !itemId) {
-        console.log('itm 新增未完成, !newItem || !itemDocId', newItem, itemId);
-        return;
-    }
+        if (!newItem || !itemId) {
+            console.log('item  新增失敗 : newItem : ', newItem, 'id:', itemId);
+            return;
+        }
 
-    const newItemFormated = {
-        ...newItem,
-        id: itemId,
-        itemId: itemId,
-        created_at: formateDateFromJS(newItem.created_at),
-        expired_date: formateDateFromJS(newItem.expired_date),
+        const newItemFormated = {
+            ...newItem,
+            id: itemId,
+            itemId: itemId,
+            created_at: formateDateFromJS(newItem.created_at),
+            expired_date: formateDateFromJS(newItem.expired_date),
+        };
+
+        const newItems = [
+            ...itemsContent.items,
+            newItemFormated,
+        ]
+
+        const response =  await reArrangeItems(newItems, sortBy)
+
+
+        if(response.status !== "success"){
+            console.log("重新排序失敗")
+            return
+        }else{
+            await updateItemsAfterChange(response.data, sortBy)
+        }
+
+    
     };
-
-    const updatedItems = [
-        ...itemsContent.items,
-        newItemFormated,
-    ];
-
-
-    await updateItemsAfterChange(updatedItems, sortBy);
-};
    
     const handleItemUpdated = async(itemId, updatedItem) => {
-        console.log('項目更新成 :', updatedItem);
+        console.log('項目更新成 :', updatedItem ,'itemId', itemId);
         
 
         if(!sortBy){
@@ -449,24 +484,35 @@ const StoragePage = ()=>{
         //日期格式化的  updatedItem
         const formatedUpdatedItem = {
             ...updatedItem,
+            id:itemId,
+            itemId: itemId,
             created_at: formateDateFromJS(updatedItem.created_at),
             expired_date: formateDateFromJS(updatedItem.expired_date),
         }
 
 
         //沒有修改的 items
-        const itmesRemain = itemsContent.items.filter((item) => item.id !== itemId);
+        const itemsRemain = itemsContent.items.filter((item) => item.id !== itemId);
 
-        //現有 items 重新排列
-        const updatedItems = [
-            ...itmesRemain,
+        console.log('itemsRemain: ',   itemsRemain)
+
+        const newItems = [
+            ...itemsRemain,
             formatedUpdatedItem,
         ]
-           
 
-        
-        await updateItemsAfterChange(updatedItems, sortBy)
-        
+        console.log('修改後 items :', newItems)
+        //現有 items 重新排列
+        const response =  await reArrangeItems(newItems, sortBy)
+
+
+        if(response.status !== "success"){
+            //排序失敗或是沒有下一筆，無需排序
+            console.log("取得下一筆項目失敗，排序失敗")
+            return
+        }else{
+            await updateItemsAfterChange(response.data, sortBy)
+        }
         
     }
 
@@ -495,7 +541,6 @@ const StoragePage = ()=>{
                 successfulItemIds.push(result.value);
             } else {
                 allSuccessful = false;
-                //紀錄刪除失敗 id
                 failedItemIds.push(groupIds[index]);
                 console.error(`Error deleting item ${groupIds[index]}: ${result.reason}`);
             }
@@ -510,10 +555,10 @@ const StoragePage = ()=>{
     
 
         const itemsLeft  = itemsContent.items.filter(item => !successfulItemIds.includes(item.id));
-        
+    
 
-        await updateItemsAfterChange(itemsLeft, sortBy);
-        
+        await updateItemsAfterChange(itemsLeft, sortBy)
+
         setGroupIds(()=>{
             const remainingIds = groupIds.filter(id => !successfulItemIds.includes(id));
             return remainingIds;
@@ -564,7 +609,7 @@ const StoragePage = ()=>{
             if(response.status === "success"){
                 const formatedData = await getformatedItems(response.data);
 
-                console.log('fetchItemsByDefault triggered')
+                console.log('檢查傳入資料格式', formatedData)
 
                 setItemsBySort((prev)=>({
                     ...prev,
