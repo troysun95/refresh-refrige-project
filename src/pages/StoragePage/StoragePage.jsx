@@ -40,9 +40,9 @@ const StoragePage = ()=>{
     const [searchShow, setSearchShow] = useState(false)
     //輸入值
     const [searchInfo, setSearchInfo] = useState({
-        searchBy: "",
+        searchBy: "name",
         input: "",
-        sortOfTime: "create_at",
+        sortOfTime: "created_at",
         duration: "week",
     })
 
@@ -261,9 +261,13 @@ const StoragePage = ()=>{
         let response ;
         if(searchShow){
             console.log('搜尋模式下，獲取更多資料')
-            response = await fetchStorageSearchData (
-                user, storageId, limitNumber, searchInfo.searchBy, "desc", 
-                setSearchInfo.sortOfTime,  itemsContent.lastSortValue,
+            // response = await fetchStorageSearchData (
+            //     user, storageId, limitNumber, searchInfo.searchBy, "desc", 
+            //     setSearchInfo.sortOfTime,  itemsContent.lastSortValue,
+            // )
+
+            response = await fetchStorageSearchData(
+                user, storageId, limitNumber, itemsContent.lastSortValue,
             )
             const updatedItems = [
                 ...itemsContent.items,
@@ -567,29 +571,61 @@ const StoragePage = ()=>{
     }
 
 
-    //搜尋
+    //輸入 input 搜尋
     const handleSearchItems = async () => { 
-        setIsSearchFilterOn(false)
 
-        if(searchInfo.input.trim().length < 0){
+        if(searchInfo.input.trim().length <= 0){
             console.log('搜尋輸入值為空')
             return
         }
 
+        setSearchShow(true)
+
+        //簡化查詢
         const response = await fetchStorageSearchData(
-            user, storageId, limitNumber, searchInfo.searchBy, "desc", searchInfo.sortOfTime, searchInfo.duration, searchInfo.input 
-        ) ; 
-        if(response){
+            user, storageId, searchInfo.input, limitNumber,
+        )
+
+        if(response.status === "success"){
+            //先進行時間轉換
+            const formatedData = response.data.map((item)=>{
+                return({
+                    ...item,
+                    created_at: getFormatedDate(item.created_at),
+                    expired_date: getFormatedDate(item.expired_date),
+                })
+            })
             setItemsContent((prev)=>({
                 ...prev,
-                items:  response.data, 
+                items:  formatedData, 
                 hasMore: response.hasMore,
                 lastSortValue: response.sortAfter
             }))
+        }else{
+            console.log(`搜尋 ${searchInfo.input}失敗`)
+            setItemsContent((prev)=>({
+                ...prev,
+                items:  [], 
+                hasMore:null,
+                lastSortValue: null,
+                errorMsg: response.errorMsg,
+            }))
         }
-        setIsSearchFilterOn(false)
+
     }
 
+    //關閉搜尋結果
+    const handleCloseSearch = ()=>{
+        setSearchShow(false)
+        setItemsContent((prev)=>({
+            ...prev,
+            items: itemsBySort[sortBy].items,
+            hasMore: itemsBySort[sortBy].hasMore,
+            lastSortValue: itemsBySort[sortBy].lastSortValue,
+        }))
+    }
+
+   
 
     //fetchItemsByDefault：首次頁面渲染用
     const fetchItemsByDefault = useCallback(async()=>{
@@ -740,6 +776,7 @@ const StoragePage = ()=>{
     useEffect(()=>{
         fetchItemsByDefault();
     },[storageName,fetchItemsByDefault])
+    
 
 
     return(
@@ -779,7 +816,8 @@ const StoragePage = ()=>{
                             <Tune className={styles.tuneIcon}
                             />
                         </div>
-                        {isSearchFilterOn ? (
+
+                        {/* {isSearchFilterOn ? (
                             <div className={styles.searchFilterPanel}>
                                 <div>
                                     <label>搜尋欄位</label>
@@ -831,33 +869,19 @@ const StoragePage = ()=>{
                                     
                                 )}
                             </div>
-                        ):null}
+                        ):null} */}
                     </div>
                     {searchShow ? (
                         <>
                                 <div className={styles.searchInfoPanel}>
-                                    搜尋結果 : 
-                                    <div className={styles.infoBanner}>
-                                        {searchInfo.type}
-                                    </div>
-                                    <div className={styles.infoBanner}>
-                                        {searchInfo.sortOfTime}
-                                    </div>
-                                    <div className={styles.infoBanner}>
-                                        {searchInfo.duration}
-                                    </div>
+                                    搜尋
                                     <div  className={styles.infoBanner}>
                                         <span>{searchInfo.input}</span>
                                     </div>
+                                    的結果 : 
+                                    
                                     <div 
-                                        onClick={()=>{
-                                            setSearchShow(false)
-                                            setItemsContent((prev)=>({
-                                                ...prev,
-                                                items: itemsBySort[sortBy].items,
-                                                hasMore: itemsBySort[sortBy].hasMore
-                                            }))
-                                        }}
+                                        onClick={handleCloseSearch}  
                                     >
                                         <Close className={styles.closeIcon}/>
                                     </div>
@@ -889,16 +913,22 @@ const StoragePage = ()=>{
                         <div 
                             className={styles.itemsBtnPanel}
                         >
-                            <input 
-                                type="checkbox" 
-                                onClick={selectAllItems}
-                            />
-                            <button
-                                onClick={handleCreateItem}
+                            {itemsContent.items.length  && (
+                                <input 
+                                    type="checkbox" 
+                                    style={{cursor:"pointer"}}
+                                    onClick={selectAllItems}
+                                />
+                            )}
+                            {!searchShow  && (
+                                <button
+                                    onClick={handleCreateItem}
 
-                            >
-                                新增項目
-                            </button>
+                                >
+                                    新增項目
+                                </button>
+                            )}
+                            
                             {groupIds.length > 0 && (
                                     <button
                                     onClick={handleDeleteGroup}
@@ -915,7 +945,8 @@ const StoragePage = ()=>{
                                 </button>
                             )}
 
-                        </div> 
+                        </div>
+
                         {/* itemsPanel */}
                         <div className={styles.itemsPanel}>
                             {isItemsLoading.type !== "inintial"  && (
@@ -941,7 +972,7 @@ const StoragePage = ()=>{
                                                     >
                                                         <div className={styles.cardTitle}>
                                                             <span className={styles.itemName}>
-                                                                {item?.name}
+                                                                {item.name}
                                                             </span>
                                                         </div>
                                                         <div className={styles.cardSubTitle}>
@@ -987,15 +1018,21 @@ const StoragePage = ()=>{
                                             )
                                         })
                                     ):(
-                                        <div>
-                                            {itemsContent.errorMsg ? ("項目讀取失敗"):("目前儲位沒有項目")}
+                                        <div 
+                                            className={styles.noItemPanel}
+                                        >
+                                            {searchShow ? (
+                                                itemsContent.errorMsg ? "項目搜尋失敗" : `沒有符合 ${searchInfo.input} 名稱的項目`
+                                            ) : (
+                                                itemsContent.errorMsg ? "項目讀取失敗" : "目前儲位沒有項目"
+                                            )}
                                         </div>
                                     )
                                 )
                             }
                             <hr />
                             <div className={styles.moreDataPanel}>
-                                {itemsContent.hasMore ? (
+                                {itemsContent.hasMore.length ? (
                                     <div
                                         onClick={()=>{
                                         getMoreData()

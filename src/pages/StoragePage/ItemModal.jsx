@@ -343,7 +343,6 @@ const ItemModal =({
                             }
                         </>)} 
                     </div>
-                    <div>{isProcessing ? "處理中" :"尚未開始"} </div>
                     {notifyContent.text.length > 0  ?(
                         <>
                             <div className={styles.notifyPopout}>

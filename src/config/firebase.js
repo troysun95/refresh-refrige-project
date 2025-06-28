@@ -75,48 +75,44 @@ const checkIsDocExist =async(docRef)=>{
 export const fetchStorageSearchData =async(
   user, 
   storageId,
+  input,
   limitNumber,
-  searchBy,
-  descending,
-  sortOfTime,
-  duration, 
-  input = null,
-  sortAfter = null
+  //首次呼叫為 null
+  lastSortValue = null,
 )=>{
-  try {
-    if(!duration){
-      throw new Error("時間範圍輸入不符合規範") 
-    }
-    if(sortAfter){
-      console.log("沒有傳入 sortAfter")
-    }
+  try { 
     const userId = user.uid;
-    const collectionPath = `users/${userId}/storageCollection/${storageId}/items`; 
-    const durationTimeStamp = getDurationTimeStamp(duration)
+
     const params = {
-      collectionPath: collectionPath,
-      limitNumber :limitNumber,
-      searchBy: searchBy,
-      descending: descending ? "desc" : "asc",
-      sortOfTime : sortOfTime,
-      durationTimeStamp : durationTimeStamp, 
-      input : input, 
-      sortAfter : sortAfter,
+      userId,
+      storageId: storageId,
+      limitNumber : limitNumber, 
+      input : input,
+      ...(lastSortValue && {lastSortValue: lastSortValue})
     }
 
-    const response = await axiosInstance.get("/getStorageDataBySearch",{
+  
+    console.log("檢查傳入 undefinded?", params)
+
+    const response = await axiosInstance.get("/api/getItemsOfStorageBySearch",{
       params
     })
 
     console.log("fetchStorageSearchData 成功！", response.data);
+
     return {
+      status:"success",
       data: response.data.data,
       hasMore: response.data.hasMore,
-      sortAfter: response.data.sortAfter,
+      lastSortValue: response.data.lastSortValue,
     }
   } catch (error) {
     console.error("failed to fetch storage search  data", error);
-    return null;
+    return {
+      status:"failed",
+      data:null,
+      errorMsg:"搜尋項目失敗"
+    };
   }
 }
 
@@ -202,13 +198,11 @@ export const updateUsername = async(
 }
 
 export const getUserSetting = async(user)=>{
-  //console.log('user input', user)
   try{
     const userSettingDocPath = getUserSettingDocPath(user)
     const docRef = doc(db, userSettingDocPath)
     const docSanp = await getDoc(docRef);
     if(docSanp.exists()){
-      //console.log("userSetting data:", docSanp.data())
       return {
         status: "success",
         data: docSanp.data()
@@ -579,7 +573,7 @@ export const getStorageSortedItems = async(
   limitNumber = 0,
   lastSortValue = null,
 )=>{
-  try { 
+  try {  
     //確認使用者有效
     checkIsUserValid(user)
     const sortDirection = isDescending ? "desc": "asc"
@@ -611,7 +605,7 @@ export const getStorageSortedItems = async(
       ...doc.data(),
     }))
 
-    const hasMore = docs.length === limitNumber;
+    const hasMore = docs.length > limitNumber;
     const nextSortValue = hasMore ? {
       sortBy: docs[docs.length - 1].get(sortBy),
       __name__: docs[docs.length - 1].id
@@ -636,74 +630,6 @@ export const getStorageSortedItems = async(
     }
   }
 }
-
-
-
-//搜尋
-// fetch search storage items
-export const fetchSearchStorageItems = async(
-  user,
-  storageId,
-  searchInfo,
-  lastSortValue = null,
-  limitNumber,
-
-)=>{
-  checkIsUserValid(user)
-  try {
-    const durationTimeStamp = getDurationTimeStamp(searchInfo.duration)
-    //傳入後端
-    const response = await axiosInstance.get("getItemsOfStorageBySearch", {
-      params:{
-        storageId: storageId,
-        limitNumber: limitNumber,
-        searchBy: searchInfo.searchBy,
-        input: searchInfo.input,
-        sortBy : searchInfo.sortOfTime,
-        durationTimeStamp : durationTimeStamp,
-        lastSortValue: lastSortValue
-      }
-    })
-
-    if(response.status === 200){
-      return {
-        status :"success",
-        data: response.data.data,
-        hasMore: response.data.hasMore,
-        lastSortValue : response.data.lastSortValue
-      }
-    }else if(response.status === 400){
-      console.error("Invalid lastSortValue");
-      return{
-        status :"failed",
-        data: null,
-        hasMore: null,
-        lastSortValue : null,
-        error: "排序標記值無效"
-      }
-    }else {
-      return{
-        status :"failed",
-        data: null,
-        hasMore: null,
-        lastSortValue : null,
-      }
-    }
-    
-  } catch (error) {
-    console.error(`搜尋資料失敗`,error)
-    return {
-      status :"failed",
-      data: null,
-      hasMore: null,
-      lastSortValue: null,
-      error: "搜尋失敗"
-    }
-  }
-}
-
-//TODO: 全部 items 搜尋 , name === input , sortBy created_at || expired_date
-//searchItemsOfAll
 
 
 
@@ -734,6 +660,8 @@ export const fetchStorageExpiredItems  = async (
       }
     })
 
+
+    
     if(response.status === 200){
       return {
         status :"success",

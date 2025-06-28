@@ -115,6 +115,12 @@
             font-size: 18px;
             border-radius: 20px;
             color: #a29797;
+            .infoBanner{
+                border-radius: 20px;
+                border: 3px solid var(--primary-color);
+                padding: 3px;
+                margin: 0 10px ;
+            }
             .searchBytype{
                 display: flex;
                 justify-content: center;
@@ -275,6 +281,12 @@
                 .itemCardSelected{
                     background-color: rgba($color: #4996de, $alpha: .5);
                     outline: 5px solid white;
+                }
+                .noItemPanel{
+                    height: 100px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
             }
 

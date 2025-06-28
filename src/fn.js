@@ -47,27 +47,27 @@ export const formateDateFromJS = (jsDate)=>{
     return `${year}-${month}-${day}`
 }
 
-//由 duration 推算出日期，並使用 timeStamp 轉換供 firebase 比較用
-export const getDurationTimeStamp = (duration)=>{
-    if(duration === "today" || duration === "week" || duration === "month"){
-        console.log('時間範圍為：' ,duration)
+//由 duration 推算出日期，計算完成後，轉為 timestamp 格式
+export const getDurationTimeStamp = (duration) => {
+    if (duration === "today" || duration === "week" || duration === "month") {
+        console.log('時間範圍為：', duration);
         const today = new Date();
-        let durationTimeStamp;
+        
+        let targetDate = new Date(today);
+
         switch (duration) {
-            case  "month":
-                durationTimeStamp = Timestamp.fromDate(today.setDate(today.getDate() - 30))
+            case "month":
+                targetDate.setDate(today.getDate() - 30);
                 break;
-
-            case  "week":
-                durationTimeStamp = Timestamp.fromDate(today.setDate(today.getDate() - 7))
+            case "week":
+                targetDate.setDate(today.getDate() - 7);
                 break;
-
             default:
-                durationTimeStamp = Timestamp.fromDate(today)
+                // today，不變
                 break;
         }
-        return durationTimeStamp
-    }else{
-        console.log('輸入非預期時間範圍 或 非有效值', duration)
+        return Timestamp.fromDate(targetDate);
+    } else {
+        console.log('輸入非預期時間範圍 或 非有效值', duration);
     }
 }
