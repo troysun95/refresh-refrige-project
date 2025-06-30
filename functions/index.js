@@ -42,6 +42,7 @@ app.get('/getItemsOfStorageBySearch', async (req, res) => {
     let query = ref
       .where("storageId", "==", storageId)
       .where("name", "==", input)
+      //.orderBy("created_at")
       .orderBy("__name__")
 
 
@@ -60,7 +61,7 @@ app.get('/getItemsOfStorageBySearch', async (req, res) => {
       id: doc.id, ...doc.data()
     }));
 
-    const hasMore = docs.length === limit;
+    const hasMore = docs.length >  limit;
     const nextSortValue = hasMore ? docs[docs.length - 1].id : null;
 
     return res.status(200).json({

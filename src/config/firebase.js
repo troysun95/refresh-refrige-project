@@ -564,7 +564,7 @@ export const deleteItemById = async (user, itemId) => {
 };
 
 
-//get storage items , 篩選 ＋ 排序 : storageId  + created_a
+//get storage items , 篩選 ＋ 排序 : storageId  + created_at
 export const getStorageSortedItems = async(
   user, 
   storageId, 
@@ -594,21 +594,29 @@ export const getStorageSortedItems = async(
 
     //根據  limitNumber 調整
     if(limitNumber > 0){
-      itemQuery = query(itemQuery, limit(limitNumber));
+      //多抓一筆以確定是否還有下一筆
+      itemQuery = query(itemQuery, limit(limitNumber + 1 ));
     }
     
     const querySnapshot = await getDocs(itemQuery)
     const docs = querySnapshot.docs
 
-    const data = docs.map((doc)=>({
+    console.log('現有 docs.data()',docs)
+    const hasMore = docs.length > limitNumber;
+    
+    console.log('getStorageSortedItems triggered!', 'limitNumber:' ,limitNumber, 'docs.length', docs.length , 'hasMore', hasMore)
+
+    const data = hasMore ? docs.slice(0, limitNumber).map(doc => ({
       id: doc.id,
       ...doc.data(),
-    }))
+    })) : docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-    const hasMore = docs.length > limitNumber;
     const nextSortValue = hasMore ? {
-      sortBy: docs[docs.length - 1].get(sortBy),
-      __name__: docs[docs.length - 1].id
+      sortBy: docs[limitNumber - 1].get(sortBy),
+      __name__: docs[limitNumber - 1].id
     } : null
 
 
