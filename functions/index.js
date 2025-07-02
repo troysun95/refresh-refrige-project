@@ -42,7 +42,6 @@ app.get('/getItemsOfStorageBySearch', async (req, res) => {
     let query = ref
       .where("storageId", "==", storageId)
       .where("name", "==", input)
-      //.orderBy("created_at")
       .orderBy("__name__")
 
 
