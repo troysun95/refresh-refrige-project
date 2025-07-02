@@ -29,10 +29,10 @@ const HomePage = ()=>{
     const [storageNames, setStorageNames] = useState([]);
     //const [expiredItems, setExpiredItems] = useState([]);
     //const [expiredItemsCount , setExpiredItemsCount] = useState(0)
-    const [fetchError, setFetchError] = useState({
-        allStorages: false,
-        expiredPanel: false,
-    })
+    // const [fetchError, setFetchError] = useState({
+    //     allStorages: false,
+    //     expiredPanel: false,
+    // })
     const [storageCreated, setStorageCreated] = useState("");
     const [checkMsg, setCheckMsg]= useState({
         type: "",
@@ -184,20 +184,22 @@ const HomePage = ()=>{
         setHasStorageNamesFetched(true)
         //loading 緩衝
         setTimeout(async () => {
-            const { data, status } = await getAllStorages(user);
-            if (status === "failed") {
-                setFetchError((prev) => ({
-                    ...prev,
-                    allStorages: true,
-                }));
-            } else {
-                const storageList = data.map((item) => ({
+            const response = await getAllStorages(user);
+            // if (status === "failed") {
+            //     setFetchError((prev) => ({
+            //         ...prev,
+            //         allStorages: true,
+            //     }));
+            // } else {
+                
+            // }
+
+            const storageList = response.data.map((item) => ({
                     storageTitle: item.storageTitle,
                     id: item.id,
                 }));
-                console.log('storageList', storageList);
+
                 setStorageNames(storageList);
-            }
             setIsLoading((prev) => ({
                 ...prev,
                 allStorages: false,
