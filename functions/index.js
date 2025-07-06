@@ -1,15 +1,8 @@
 
 const {onRequest} = require("firebase-functions/v2/https");
-// const logger = require("firebase-functions/logger");
-
-
-//const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
-
-console.log("FieldPath:", admin.firestore.FieldPath);
-console.log("FieldPath.documentId:", admin.firestore.FieldPath?.documentId);
 
 
 const cors = require('cors')
@@ -22,7 +15,7 @@ const app = express();
 
 // //CORS 允許網域
 app.use(cors({
-  origin: ['http://localhost:3000'], 
+  origin: ['http://localhost:3000','https://troysun95.github.io'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 
@@ -74,5 +67,5 @@ app.get('/getItemsOfStorageBySearch', async (req, res) => {
   }
 });
 
-//exports.api = functions.https.onRequest(app);
+
 exports.api = onRequest(app);

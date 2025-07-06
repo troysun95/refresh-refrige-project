@@ -1,9 +1,9 @@
 @use '../../styles/base';
-//LoginPage
+
 .loginWrapper{
+    width: 100%;
     margin: 0;
-    border: 3px solid #000;
-    width: 95%;
+    padding: 0;
     position: relative;
     font-family: var(--main-text-font-family);
     .brandContainer{

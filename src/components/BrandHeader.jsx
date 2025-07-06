@@ -11,7 +11,7 @@ const BrandHeader = ()=>{
                     onClick={handleToHomePage} 
                 >
                     <Kitchen className={styles.brandICon}/>
-                    <span  className={styles.brandTitle}>Refresh Refige</span>
+                    <span  className={styles.brandTitle}>Refresh Refrige</span>
                 </div>
             </div>
         </>

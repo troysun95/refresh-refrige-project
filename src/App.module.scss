@@ -1,7 +1,7 @@
 
 .appContainer {
-    border: 2px solid red;
     height: 100vh;
+    width: 100vw;
     display: flex;
     justify-content: center;
     background-color: var(--background-color);
@@ -17,9 +17,9 @@
 }
 
 @media (min-width: 992px) and (max-width: 1440px) {
-.appContainer{ 
-width: 1440px;
-}
+  .appContainer{ 
+    width: 1440px;
+    }
 }
   
 
